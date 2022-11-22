@@ -1,0 +1,35 @@
+{
+    "extends": "@tsconfig/node16-strictest/tsconfig.json",
+    "compilerOptions": {
+        "moduleResolution": "Node16",
+        "target": "ES2022",
+        /* Whenever incremental compilation is enabled */
+        "incremental": true,
+        /* File containing saved information about incremental compilation */
+        "tsBuildInfoFile": "./cache/tsc.json",
+        /* Whenever sourcemaps should be made for emitted JavaScript files */
+        "sourceMap": true,
+        /* Whenever to emit declaration files */
+        "declaration": true,
+        /* Directrory in which are placed all emitted files */
+        "outDir": "./dist",
+        /* Directory in which are placed declaration files */
+        "declarationDir": "./types/",
+        /* Whenever comments are removed from emitted files */
+        "removeComments": false,
+        /* Use `tslib` for import helpers. */
+        "importHelpers": true,
+        /* Enforce consistent casing for imported module names */
+        "forceConsistentCasingInFileNames": true,
+        /* Use *nix end-of-line character for emitted files */
+        "newLine": "lf",
+        /* Do not emit anything when there's an error in source files */
+        "noEmitOnError": true
+    },
+    "files": [
+        "./sources/transport/protocol.ts",
+        "./sources/transport/websocket.ts",
+        //"./sources/transport/ipc.ts",
+        "./sources/main.ts"
+    ]
+}

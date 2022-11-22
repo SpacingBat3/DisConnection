@@ -1,0 +1,11 @@
+# Artifacts, cache, dependencies etc.
+node_modules/
+dist/
+cache/
+types/
+# Hidden directories
+.*/
+!.github/
+# Lockfiles
+*lock*
+!package-lock.json
