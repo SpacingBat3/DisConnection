@@ -121,17 +121,84 @@ type HookSignatures = {
     ? [request: Message<C,T>] : P extends infer C extends code ? [request: Message<C,never>] : never;
 }
 type HookFn<T extends HookName> = (...args:HookSignatures[T]) => Promise<void>;
-export type HookMap = {
-  [P in HookName]?: HookFn<P>|HookFn<P>[];
+type HookMap = {
+  [P in HookName]: Set<HookFn<P>>;
 }
 
 export abstract class Protocol {
   public abstract name: string;
-  protected hooks: Readonly<HookMap>;
+  #hooks: HookMap = {
+    AUTHORIZE: new Set(),
+    DEEP_LINK_CHANNEL: new Set(),
+    GUILD_TEMPLATE_BROWSER: new Set(),
+    INVITE_BROWSER: new Set()
+  };
   public log(message:string, ...args:unknown[]) {
     console.log(kolor.bold(kolor.magentaBright(`[${this.name}]`)), message,...args);
   }
-  constructor(hooks: HookMap) {
-    this.hooks = Object.freeze(hooks);
+  /**
+   * Adds given hook function to the hook list identified by `key`.
+   * 
+   * @returns number of hooks of given key or `false` if value were added before
+   * @since v1.0.0
+   */
+  public addHook<T extends HookName>(key: T, value: HookFn<T>) {
+    const wereAddedBefore = this.#hooks[key].has(value);
+    this.#hooks[key].add(value);
+    return wereAddedBefore ? false : [...this.#hooks[key]].length;
+  }
+  /**
+   * Removes given hook function from the hook list identified by `key`.
+   * 
+   * @returns whenever hook has been deleted
+   * @since v1.0.0
+   */
+  public removeHook<T extends HookName>(key: T, value: HookFn<T>) {
+    return this.#hooks[key].delete(value);
+  }
+  /**
+   * Removes **all** hooks from the hook list identified by `key`.
+   * 
+   * @returns if hook list wasn't empty before removing values from it
+   * @since v1.0.0
+   */
+  public removeAllHooks<T extends HookName>(key: T) {
+    const returnValue = [...this.#hooks[key]].length > 0;
+    this.#hooks[key].clear();
+    return returnValue;
+  }
+  /**
+   * Lists all hooks from the hook list identified by `key` in `Array`.
+   * 
+   * @returns `Array` of hooks
+   * @since v1.0.0
+   */
+  public getHooks<T extends HookName>(key:T) {
+    return [...this.#hooks[key]];
+  }
+  static messageResponse(message: Message<string,string|never>) {
+    switch(message.cmd) {
+      case "INVITE_BROWSER":
+      case "GUILD_TEMPLATE_BROWSER":
+        return {
+          cmd: message.cmd,
+          data: {
+            code: message.args["code"]??null,
+            ...(message.cmd === "GUILD_TEMPLATE_BROWSER" ? {
+              guildTemplate: {
+                code: message.args["code"]??null
+              }
+            } : {})
+          },
+          nonce: message.nonce
+        }
+      default:
+        return {
+          cmd: message.cmd,
+          data: null,
+          evt: null,
+          nonce: message.nonce
+        };
+    }
   }
 }

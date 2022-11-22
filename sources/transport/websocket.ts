@@ -2,8 +2,6 @@ import { Server, WebSocketServer } from "ws";
 //import kolor from "@spacingbat3/kolor";
 import {Protocol, isMessage, staticMessages, isJSONParsable, knownMsgEl } from "./protocol";
 
-import type { HookMap } from "./protocol";
-
 /**
  * A list of standard status codes used within WebSocket communication at
  * connection close. Currently, not all are documented there, althrough all were
@@ -72,8 +70,8 @@ const unsupportedOrigins = [
 export class WebSocketProtocol extends Protocol {
   public name = "WebSocket";
   public details: Promise<serverDetails>;
-  constructor(hooks: HookMap,validOrigins:(RegExp|string)[]) {
-    super(hooks);
+  constructor(validOrigins:(RegExp|string)[]) {
+    super();
     const details = getServer(6463, 6472);
     this.details = details;
     details
@@ -115,36 +113,22 @@ export class WebSocketProtocol extends Protocol {
             return knownMsgEl.types.find(type => {
               if(isMessage(parsedData,code,type)) {
                 const message = Object.freeze(parsedData);
-                const hook = this.hooks[`${code}_${type}`];
-                let result: Promise<void|void[]> = Promise.resolve();
-                if(hook !== undefined)
-                  result = Array.isArray(hook) ?
-                    Promise.all(hook.map(hook => hook(message))) :
-                    hook(message);
-                result.then(() => client.send(JSON.stringify({
-                  cmd: message.cmd,
-                  data: null,
-                  evt: null,
-                  nonce: message.nonce
-                })));
+                const hooks = this.getHooks(`${code}_${type}`);
+                Promise.all(hooks.map(hook => hook(message)))
+                  .then(() => client.send(
+                    JSON.stringify(Protocol.messageResponse(message))
+                  ));
                 return true;
               }
               return false;
             }) !== undefined;
           else if(isMessage(parsedData,code)) {
-            const message = parsedData;
-            const hook = this.hooks[code];
-            let result: Promise<void|void[]> = Promise.resolve();
-            if(hook !== undefined)
-              result = Array.isArray(hook) ?
-                Promise.all(hook.map(hook => (hook as (request:typeof message) => Promise<void>)(message))) :
-                (hook as (request:typeof message) => Promise<void>)(message);
-            result.then(() => client.send(JSON.stringify({
-              cmd: message.cmd,
-              data: null,
-              evt: null,
-              nonce: message.nonce
-            })));
+            const message = Object.freeze(parsedData);
+            const hooks = this.getHooks(code);
+            Promise.all(hooks.map(hook => (hook as (v: typeof message)=>Promise<void>)(message)))
+              .then(() => client.send(
+                JSON.stringify(Protocol.messageResponse(message))
+              ));
             return true;
           }
           return false;
