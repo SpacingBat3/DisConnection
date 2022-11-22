@@ -1,5 +1,9 @@
-import { WebSocketProtocol as WebSocket } from "./transport/websocket";
+import { 
+  WebSocketProtocol as WebSocket,
+  WebSocketClose
+} from "./transport/websocket";
 
 export {
-  WebSocket
+  WebSocket,
+  WebSocketClose
 }

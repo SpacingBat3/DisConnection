@@ -12,7 +12,7 @@ import {Protocol, isMessage, staticMessages, isJSONParsable, knownMsgEl } from "
  * [MDN]: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
  * [RFC6455]: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1
  */
-const enum SocketClose {
+export const enum WebSocketClose {
   /** Emmited on normal server closure. */
   Ok = 1000,
   /** Emmited when endpoint is going away, e.g. on navigation or server failure. */
@@ -90,13 +90,13 @@ export class WebSocketProtocol extends Protocol {
       // Verify client trust.
       if(validOrigins.find(passingRule) === undefined) {
         console.debug(`[${this.name}] Blocked request from origin '${req.headers.origin??"UNKNOWN"}'. (not trusted)`);
-        client.close(SocketClose.PolicyViolation,"Client is not trusted.");
+        client.close(WebSocketClose.PolicyViolation,"Client is not trusted.");
         return;
       }
       // Check if clients are supported
       if(unsupportedOrigins.find(passingRule) !== undefined) {
         console.debug(`[${this.name}] Blocked request from origin '${req.headers.origin??"UNKNOWN"}'. (not supported)`);
-        client.close(SocketClose.PolicyViolation,"Client is not supported.");
+        client.close(WebSocketClose.PolicyViolation,"Client is not supported.");
         return;
       }
       // Send "DISPATCH" event
@@ -141,18 +141,18 @@ export class WebSocketProtocol extends Protocol {
             const msg = `Request of type: '${type}' is currently not supported.`;
             console.error(`[${this.name}] %s`, msg);
             console.debug(`[${this.name}] Request %s`, JSON.stringify(parsedData,undefined,4));
-            client.close(SocketClose.InvalidPayload, msg);
+            client.close(WebSocketClose.InvalidPayload, msg);
           }
           // Unknown text message error
           else if(!isBinary) {
             const msg = `Could not handle the packed text data: '${packet.toString()}'.`;
             console.error(`[${this.name}] %s`, msg);
-            client.close(SocketClose.InvalidPayload, msg);
+            client.close(WebSocketClose.InvalidPayload, msg);
           }
           // Unknown binary data transfer error
           else {
             console.error(`[${this.name}] Unknown data transfer (not text).`);
-            client.close(SocketClose.UnsupportedData, "Unknown data transfer");
+            client.close(WebSocketClose.UnsupportedData, "Unknown data transfer");
           }
       });
     }))().catch(reason => {
