@@ -1,5 +1,6 @@
 import kolor from "@spacingbat3/kolor";
 
+/** Generic type for Discord's incoming messages format. */
 interface Message<C extends string, T extends string|never> {
   /** Message type/command. */
   cmd: C;
@@ -32,18 +33,18 @@ type messageParams<T extends string> = T extends "CHANNEL" ? {
   fingerprint: string;
 } : Record<string,unknown>;
 
-type typeofResult = "string" | "number" | "bigint" | "boolean" | "object" |
-"function" | "undefined";
-type typeofResolved<T extends typeofResult> =  T extends "string" ? string :
-  T extends "number" ? number : T extends "bigint" ? bigint :
-    T extends "boolean" ? boolean : T extends "object" ? object|null :
-      T extends "function" ? (...args:unknown[])=>unknown :
-        T extends "undefined" ? undefined : unknown;
 /**
  * Generic response checker, assumes Discord will do requests of certain type
  * based on `cmd` and `argsType` values.
  */
 export function isMessage<C,T>(data:unknown, cmd?: C&string|(C&string)[], argsType?: T&string): data is Message<C extends string ? C : string,T extends string ? T : never> {
+  type typeofResult = "string" | "number" | "bigint" | "boolean" | "object" |
+"function" | "undefined";
+  type typeofResolved<T extends typeofResult> =  T extends "string" ? string :
+    T extends "number" ? number : T extends "bigint" ? bigint :
+      T extends "boolean" ? boolean : T extends "object" ? object|null :
+        T extends "function" ? (...args:unknown[])=>unknown :
+          T extends "undefined" ? undefined : unknown;
   function checkRecord<T extends (string|number|symbol)[], X extends typeofResult>(record:Record<string|number|symbol, unknown>,keys:T,arg:X): record is Record<T[number],typeofResolved<X>> {
     for(const key of keys)
       if(typeof record[key] !== arg)
@@ -77,6 +78,7 @@ export function isMessage<C,T>(data:unknown, cmd?: C&string|(C&string)[], argsTy
   return true;
 }
 
+/** Verifies if given string can be parsed to `object` with `JSON.parse`. */
 export function isJSONParsable(text:string) {
   try {
     JSON.parse(text);
