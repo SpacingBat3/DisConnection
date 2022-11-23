@@ -127,6 +127,12 @@ type HookMap = {
   [P in HookName]: Set<HookFn<P>>;
 }
 
+/**
+ * A specification which defines Discord communication protocol used within
+ * DisConnection. It is used for implemending various *transports*, like
+ * WebSocket server or 
+ * 
+ */
 export abstract class Protocol {
   public abstract name: string;
   #hooks: HookMap = {

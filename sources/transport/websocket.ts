@@ -7,10 +7,10 @@ import {Protocol, isMessage, staticMessages, isJSONParsable, knownMsgEl } from "
  * connection close. Currently, not all are documented there, althrough all were
  * listed, with some additional ones took from MDN.
  * 
- * Reference: [MDN], [RFC6455].
+ * Reference: [MDN], [RFC 6455].
  * 
- * [MDN]: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
- * [RFC6455]: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1
+ * [MDN]: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code "CloseEvent.close – Web APIs | MDN"
+ * [RFC 6455]: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1  "RFC 6455: The WebSocket protocol."
  */
 export const enum WebSocketClose {
   /** Emmited on normal server closure. */
@@ -60,13 +60,18 @@ function getServer(start:number,end:number) {
   return tryServer(start);
 }
 
+/** A hard-coded blocklist of origins. */
 const unsupportedOrigins = [
   // Discord services are currently unsupported:
   /^https:\/\/[a-z]+\.discord\.com$/,
-  // Locally hosted sites are currently unsupported / should be ignored:
+  // Loopback clients are currently unsupported / should be ignored:
   "127.0.0.1"
 ];
 
+/**
+ * Implements Discord client communication {@link Protocol} (between Discord
+ * browser or any software with Discord integrations) via WebSocket server.
+ */
 export class WebSocketProtocol extends Protocol {
   public name = "WebSocket";
   public details: Promise<serverDetails>;
