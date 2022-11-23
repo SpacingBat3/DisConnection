@@ -6,7 +6,8 @@
   "types": "./types/main.d.ts",
   "scripts": {
     "prepack": "tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "postinstall": "tsc | true"
   },
   "repository": {
     "type": "git",
