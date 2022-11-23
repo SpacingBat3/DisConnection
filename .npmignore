@@ -1,2 +1,5 @@
 # Do not include docs in Node packages.
 docs/
+# Exclude sources and `tsconfig.json` from built package.
+sources/
+tsconfig.json
