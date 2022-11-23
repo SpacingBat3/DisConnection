@@ -122,7 +122,7 @@ type HookSignatures = {
   [P in HookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
     ? [request: Message<C,T>] : P extends infer C extends code ? [request: Message<C,never>] : never;
 }
-type HookFn<T extends HookName> = (...args:HookSignatures[T]) => Promise<void>;
+export type HookFn<T extends HookName> = (...args:HookSignatures[T]) => Promise<void>;
 type HookMap = {
   [P in HookName]: Set<HookFn<P>>;
 }

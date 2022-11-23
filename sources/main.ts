@@ -4,6 +4,14 @@ import {
 } from "./transport/websocket";
 
 export {
-  WebSocket,
+  WebSocket
+}
+
+import type {
+  HookFn
+} from "./transport/protocol"
+
+export type {
+  HookFn,
   WebSocketClose
 }
