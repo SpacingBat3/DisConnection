@@ -63,7 +63,7 @@ function getServer(start:number,end:number) {
 /** A hard-coded blocklist of origins. */
 const unsupportedOrigins = [
   // Discord services are currently unsupported:
-  /^https:\/\/[a-z]+\.discord\.com$/,
+  /^https:\/\/(?!canary|ptb)(?:[a-z]+)\.discord\.com$/,
   // Loopback clients are currently unsupported / should be ignored:
   "127.0.0.1"
 ];
