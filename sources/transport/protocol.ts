@@ -184,29 +184,28 @@ export abstract class Protocol {
   public getHooks<T extends HookName>(key:T) {
     return [...this.#hooks[key]];
   }
+  /**
+   * This method maps incomming messages from transports to outgoing messages
+   * with partially-filled data, i.e. nothing is being resolved as it takes
+   * place in the official Discord client.
+   * 
+   * @param message Incomming message from transports
+   * @returns Outgoing message that can be send as a response.
+   */
   static messageResponse(message: Message<string,string|never>) {
-    switch(message.cmd) {
-      case "INVITE_BROWSER":
-      case "GUILD_TEMPLATE_BROWSER":
-        return {
-          cmd: message.cmd,
-          data: {
-            code: message.args["code"]??null,
-            ...(message.cmd === "GUILD_TEMPLATE_BROWSER" ? {
-              guildTemplate: {
-                code: message.args["code"]??null
-              }
-            } : {})
-          },
-          nonce: message.nonce
-        }
-      default:
-        return {
-          cmd: message.cmd,
-          data: null,
-          evt: null,
-          nonce: message.nonce
-        };
-    }
+    const browserReq = /^(INVITE|GUILD_TEMPLATE)_BROWSER$/;
+    return Object.freeze({
+      cmd: message.cmd,
+      data: browserReq.test(message.cmd) ? {
+        code: message.args["code"]??null,
+          ...(message.cmd === "GUILD_TEMPLATE_BROWSER" ? {
+            guildTemplate: {
+              code: message.args["code"]??null
+            }
+          } : {})
+        } : null,
+      ...(browserReq.test(message.cmd) ? {} : {evt: null}),
+      nonce: message.nonce
+    } as const)
   }
 }
