@@ -1,0 +1,2 @@
+# Do not include docs in Node packages.
+docs/
