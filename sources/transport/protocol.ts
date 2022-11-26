@@ -92,7 +92,7 @@ export const staticMessages = Object.freeze({
   /**
    * A fake, hard-coded Discord command to spoof the presence of
    * official Discord client (which makes browser to actually start a
-   * communication with the WebCord).
+   * communication with the DisConnection).
    */
   dispatch: {
     /** Message command. */
@@ -109,22 +109,28 @@ export const staticMessages = Object.freeze({
   }
 } as const);
 
-export const knownMsgEl = {
+export const knownMsgEl = Object.freeze({
   codes: Object.freeze(["INVITE_BROWSER","GUILD_TEMPLATE_BROWSER","AUTHORIZE","DEEP_LINK"] as const),
   types: Object.freeze(["CHANNEL"] as const)
-}
+});
+
+const hookNames = knownMsgEl.codes
+  .flatMap(code => code === "DEEP_LINK" ? knownMsgEl.types.map(type => `${code}_${type}` as const) : code);
 
 type code = typeof knownMsgEl.codes[number];
 type type = typeof knownMsgEl.types[number];
+type hookName = typeof hookNames[number];
 
-type HookName = code extends infer C ? C extends "DEEP_LINK" ? `${C}_${type}` : C : never;
 type HookSignatures = {
-  [P in HookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
+  [P in hookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
     ? [request: Message<C,T>] : P extends infer C extends code ? [request: Message<C,never>] : never;
 }
-export type HookFn<T extends HookName> = (...args:HookSignatures[T]) => Promise<void>;
+export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<void>;
 type HookMap = {
-  [P in HookName]: Set<HookFn<P>>;
+  [P in hookName]: {
+    set: Set<HookFn<P>>;
+    active: boolean;
+  };
 }
 
 /**
@@ -134,55 +140,117 @@ type HookMap = {
  * 
  */
 export abstract class Protocol {
-  public abstract name: string;
-  #hooks: HookMap = {
-    AUTHORIZE: new Set(),
-    DEEP_LINK_CHANNEL: new Set(),
-    GUILD_TEMPLATE_BROWSER: new Set(),
-    INVITE_BROWSER: new Set()
-  };
+  public abstract readonly name: string;
+  protected abstract stopServer(): void;
+  #destroyed = false;
+  #hooks = hookNames.reduce((prev,cur) => ({
+    ...prev,
+    [cur]: {
+      list: new Set<HookFn<typeof cur>>(),
+      active: true
+    }
+  } satisfies Partial<HookMap>), {} as HookMap);
   public log(message:string, ...args:unknown[]) {
     console.log(kolor.bold(kolor.magentaBright(`[${this.name}]`)), message,...args);
   }
+  public isDestroyed() {
+    return this.#destroyed;
+  }
+  public destroy() {
+    const destroyError = new Error("Class has been already destroyed!");
+    if(this.#destroyed)
+      throw destroyError;
+    const destroyFunc = () => { throw destroyError };
+    this.stopServer();
+    this.addHook = this.anyHooksActive = this.getHooks = destroyFunc;
+    this.removeAllHooks = this.removeHook = this.toggleHooks = destroyFunc;
+    this.stopServer = this.log = destroyFunc;
+    (Object.keys(this.#hooks) as hookName[]).forEach(key => this.removeAllHooks(key));
+    this.#hooks = Object.freeze(this.#hooks);
+    this.#destroyed = true;
+  }
   /**
-   * Adds given hook function to the hook list identified by `key`.
+   * Adds a hook to the given hook list if it doesn't exist in it.
+   * 
+   * @param name A name of hook list.
+   * @param value A function that will be added to hook list.
    * 
    * @returns number of hooks of given key or `false` if value were added before
    * @since v1.0.0
    */
-  public addHook<T extends HookName>(key: T, value: HookFn<T>) {
-    const wereAddedBefore = this.#hooks[key].has(value);
-    this.#hooks[key].add(value);
-    return wereAddedBefore ? false : [...this.#hooks[key]].length;
+  public addHook<T extends hookName>(name: T, value: HookFn<T>) {
+    if(!(name in this.#hooks) || typeof value !== "function")
+      throw new TypeError("Invalid parameters type!");
+    const wereAddedBefore = this.#hooks[name].set.has(value);
+    this.#hooks[name].set.add(value);
+    return wereAddedBefore ? false : [...this.#hooks[name].set].length;
   }
   /**
-   * Removes given hook function from the hook list identified by `key`.
+   * Removes given hook function from give the hook list.
+   * 
+   * @param name A name of hook list.
    * 
    * @returns whenever hook has been deleted
    * @since v1.0.0
    */
-  public removeHook<T extends HookName>(key: T, value: HookFn<T>) {
-    return this.#hooks[key].delete(value);
+  public removeHook<T extends hookName>(name: T, value: HookFn<T>) {
+    if(!(name in this.#hooks) || typeof value !== "function")
+      throw new TypeError("Invalid parameters type!");
+    return this.#hooks[name].set.delete(value);
   }
   /**
-   * Removes **all** hooks from the hook list identified by `key`.
+   * Removes **all** hooks from the given hook list.
    * 
-   * @returns if hook list wasn't empty before removing values from it
+   * @param name A name of hook list.
+   * 
+   * @returns if hook list wasn't empty before removing — values from it
    * @since v1.0.0
    */
-  public removeAllHooks<T extends HookName>(key: T) {
-    const returnValue = [...this.#hooks[key]].length > 0;
-    this.#hooks[key].clear();
+  public removeAllHooks<T extends hookName>(name: T) {
+    if(!(name in this.#hooks))
+      throw new TypeError("Invalid parameters type!");
+    const returnValue = [...this.#hooks[name].set].length > 0;
+    this.#hooks[name].set.clear();
     return returnValue;
   }
   /**
-   * Lists all hooks from the hook list identified by `key` in `Array`.
+   * Lists all hooks from the given hook list.
+   * 
+   * @param name A name of hook list.
    * 
    * @returns `Array` of hooks
    * @since v1.0.0
    */
-  public getHooks<T extends HookName>(key:T) {
-    return [...this.#hooks[key]];
+  public getHooks<T extends hookName>(name:T) {
+    if(!(name in this.#hooks))
+      throw new TypeError(`Hook list "${name}" is invalid!`);
+    return [...this.#hooks[name].set];
+  }
+  /**
+   * Whenever any of hooks will execute by server.
+   * 
+   * @param name A name of hook list.
+   * 
+   * @returns whenever hooks are *active*
+   * @since v1.0.0
+   */
+  public anyHooksActive<T extends hookName>(name:T) {
+    if([...this.#hooks[name].set].length === 0)
+      return false;
+    return this.#hooks[name].active;
+  }
+  /**
+   * Switches state of a given hook list, which can either disable it or not.
+   * 
+   * @param name A name of hook list.
+   * @param active New state of hooks. Defaults to negation of previous state.
+   * 
+   * @returns current state of given hook (i.e if it is active or not)
+   * @since v1.0.0
+   */
+  public toggleHooks<T extends hookName>(name: T, active = !this.#hooks[name].active) {
+    this.#hooks[name].active = active;
+    return this.anyHooksActive(name);
   }
   /**
    * This method maps incomming messages from transports to outgoing messages

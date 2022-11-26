@@ -73,8 +73,14 @@ const unsupportedOrigins = [
  * browser or any software with Discord integrations) via WebSocket server.
  */
 export class WebSocketProtocol extends Protocol {
-  public name = "WebSocket";
-  public details: Promise<serverDetails>;
+  name = "WebSocket";
+  stopServer() {
+    this.details?.then(({server}) => {
+      server.close();
+      delete this.details;
+    });
+  }
+  public details?: Promise<serverDetails>;
   constructor(validOrigins:(RegExp|string)[]) {
     super();
     const details = getServer(6463, 6472);
@@ -118,22 +124,35 @@ export class WebSocketProtocol extends Protocol {
             return knownMsgEl.types.find(type => {
               if(isMessage(parsedData,code,type)) {
                 const message = Object.freeze(parsedData);
-                const hooks = this.getHooks(`${code}_${type}`);
-                Promise.all(hooks.map(hook => hook(message)))
-                  .then(() => client.send(
-                    JSON.stringify(Protocol.messageResponse(message))
-                  ));
+                const [hooks,isActive] = [
+                  this.getHooks(`${code}_${type}`),
+                  this.anyHooksActive(`${code}_${type}`)
+                ]
+                if(isActive)
+                  Promise.all(hooks.map(hook => hook(message)))
+                    .then(() => client.send(
+                      JSON.stringify(Protocol.messageResponse(message))
+                    )
+                  );
+                else
+                  client.send(JSON.stringify(Protocol.messageResponse(message)))
                 return true;
               }
               return false;
             }) !== undefined;
           else if(isMessage(parsedData,code)) {
             const message = Object.freeze(parsedData);
-            const hooks = this.getHooks(code);
-            Promise.all(hooks.map(hook => (hook as (v: typeof message)=>Promise<void>)(message)))
-              .then(() => client.send(
-                JSON.stringify(Protocol.messageResponse(message))
-              ));
+            const [hooks,isActive] = [
+              this.getHooks(code),
+              this.anyHooksActive(code)
+            ]
+            if(isActive)
+              Promise.all(hooks.map(hook => (hook as (v: typeof message)=>Promise<void>)(message)))
+                .then(() => client.send(
+                  JSON.stringify(Protocol.messageResponse(message))
+                ));
+            else
+              client.send(JSON.stringify(Protocol.messageResponse(message)))
             return true;
           }
           return false;
