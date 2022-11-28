@@ -39,7 +39,7 @@ type messageParams<T extends string> = T extends "CHANNEL" ? {
  */
 export function isMessage<C,T>(data:unknown, cmd?: C&string|(C&string)[], argsType?: T&string): data is Message<C extends string ? C : string,T extends string ? T : never> {
   type typeofResult = "string" | "number" | "bigint" | "boolean" | "object" |
-"function" | "undefined";
+  "function" | "undefined";
   type typeofResolved<T extends typeofResult> =  T extends "string" ? string :
     T extends "number" ? number : T extends "bigint" ? bigint :
       T extends "boolean" ? boolean : T extends "object" ? object|null :
@@ -124,14 +124,14 @@ type hookName = typeof hookNames[number];
 type HookSignatures = {
   [P in hookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
     ? [request: Message<C,T>] : P extends infer C extends code ? [request: Message<C,never>] : never;
-}
+};
 export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<void>;
 type HookMap = {
   [P in hookName]: {
     set: Set<HookFn<P>>;
     active: boolean;
   };
-}
+};
 
 /**
  * A specification which defines Discord communication protocol used within
@@ -143,13 +143,13 @@ export abstract class Protocol {
   public abstract readonly name: string;
   protected abstract stopServer(): void;
   #destroyed = false;
-  #hooks = hookNames.reduce((prev,cur) => ({
+  #hooks = hookNames.reduce<Partial<HookMap>>((prev,cur) => ({
     ...prev,
     [cur]: {
       list: new Set<HookFn<typeof cur>>(),
       active: true
     }
-  } satisfies Partial<HookMap>), {} as HookMap);
+  } satisfies Partial<HookMap>), {}) as HookMap;
   public log(message:string, ...args:unknown[]) {
     console.log(kolor.bold(kolor.magentaBright(`[${this.name}]`)), message,...args);
   }
@@ -160,7 +160,7 @@ export abstract class Protocol {
     const destroyError = new Error("Class has been already destroyed!");
     if(this.#destroyed)
       throw destroyError;
-    const destroyFunc = () => { throw destroyError };
+    const destroyFunc = () => { throw destroyError; };
     this.stopServer();
     this.addHook = this.anyHooksActive = this.getHooks = destroyFunc;
     this.removeAllHooks = this.removeHook = this.toggleHooks = destroyFunc;
@@ -266,14 +266,14 @@ export abstract class Protocol {
       cmd: message.cmd,
       data: browserReq.test(message.cmd) ? {
         code: message.args["code"]??null,
-          ...(message.cmd === "GUILD_TEMPLATE_BROWSER" ? {
-            guildTemplate: {
-              code: message.args["code"]??null
-            }
-          } : {})
-        } : null,
+        ...(message.cmd === "GUILD_TEMPLATE_BROWSER" ? {
+          guildTemplate: {
+            code: message.args["code"]??null
+          }
+        } : {})
+      } : null,
       ...(browserReq.test(message.cmd) ? {} : {evt: null}),
       nonce: message.nonce
-    } as const)
+    } as const);
   }
 }

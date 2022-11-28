@@ -1,17 +1,17 @@
-import { 
+import {
   WebSocketProtocol as WebSocket,
   WebSocketClose
 } from "./transport/websocket";
 
 export {
   WebSocket
-}
+};
 
 import type {
   HookFn
-} from "./transport/protocol"
+} from "./transport/protocol";
 
 export type {
   HookFn,
   WebSocketClose
-}
+};

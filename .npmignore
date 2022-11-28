@@ -1,5 +1,7 @@
 # Do not include docs in Node packages.
 docs/
-# Exclude sources and `tsconfig.json` from built package.
+# Exclude TypeScript-related files
 sources/
 tsconfig.json
+# Exclude linter configuration
+.eslintrc.json

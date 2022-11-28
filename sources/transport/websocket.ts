@@ -36,11 +36,11 @@ export const enum WebSocketClose {
   BadGateway
 }
 
-type serverDetails = {server: Server, port: number};
+interface ServerDetails {server: Server; port: number}
 
 function getServer(start:number,end:number) {
   function tryServer(port: number) {
-    return new Promise<serverDetails>(resolve => {
+    return new Promise<ServerDetails>(resolve => {
       if(port > end)
         throw new Error("All ports from given range are busy!");
       const wss = new WebSocketServer({host: "127.0.0.1", port: port++});
@@ -75,17 +75,17 @@ const unsupportedOrigins = [
 export class WebSocketProtocol extends Protocol {
   name = "WebSocket";
   stopServer() {
-    this.details?.then(({server}) => {
+    void this.details?.then(({server}) => {
       server.close();
       delete this.details;
     });
   }
-  public details?: Promise<serverDetails>;
+  public details?: Promise<ServerDetails>;
   constructor(validOrigins:(RegExp|string)[]) {
     super();
     const details = getServer(6463, 6472);
     this.details = details;
-    details
+    void details
       .then(v => v.port)
       .then(port => this.log("Opened at port: %s",port));
     // Async block
@@ -113,10 +113,12 @@ export class WebSocketProtocol extends Protocol {
       // Send "DISPATCH" event
       client.send(JSON.stringify(staticMessages.dispatch));
       client.on("message", (packet,isBinary) => {
-        let parsedData:unknown = packet;
+        let packetString = "", parsedData:unknown = packet;
         if(!isBinary) {
-          const packetString = parsedData = packet.toString();
-          if(!isBinary && isJSONParsable(packetString))
+          packetString = parsedData = Buffer.isBuffer(packet) || Array.isArray(packet) ?
+            packet.toString() :
+            String.fromCharCode(...new Uint8Array(packet));
+          if(isJSONParsable(packetString))
             parsedData = JSON.parse(packetString);
         }
         const hookParsed = knownMsgEl.codes.find(code => {
@@ -127,15 +129,15 @@ export class WebSocketProtocol extends Protocol {
                 const [hooks,isActive] = [
                   this.getHooks(`${code}_${type}`),
                   this.anyHooksActive(`${code}_${type}`)
-                ]
+                ];
                 if(isActive)
-                  Promise.all(hooks.map(hook => hook(message)))
+                  void Promise.all(hooks.map(hook => hook(message)))
                     .then(() => client.send(
                       JSON.stringify(Protocol.messageResponse(message))
                     )
-                  );
+                    );
                 else
-                  client.send(JSON.stringify(Protocol.messageResponse(message)))
+                  client.send(JSON.stringify(Protocol.messageResponse(message)));
                 return true;
               }
               return false;
@@ -145,14 +147,14 @@ export class WebSocketProtocol extends Protocol {
             const [hooks,isActive] = [
               this.getHooks(code),
               this.anyHooksActive(code)
-            ]
+            ];
             if(isActive)
-              Promise.all(hooks.map(hook => (hook as (v: typeof message)=>Promise<void>)(message)))
+              void Promise.all(hooks.map(hook => (hook as (v: typeof message)=>Promise<void>)(message)))
                 .then(() => client.send(
                   JSON.stringify(Protocol.messageResponse(message))
                 ));
             else
-              client.send(JSON.stringify(Protocol.messageResponse(message)))
+              client.send(JSON.stringify(Protocol.messageResponse(message)));
             return true;
           }
           return false;
@@ -169,7 +171,7 @@ export class WebSocketProtocol extends Protocol {
           }
           // Unknown text message error
           else if(!isBinary) {
-            const msg = `Could not handle the packed text data: '${packet.toString()}'.`;
+            const msg = `Could not handle the packed text data: '${packetString}'.`;
             console.error(`[${this.name}] %s`, msg);
             client.close(WebSocketClose.InvalidPayload, msg);
           }
@@ -180,10 +182,10 @@ export class WebSocketProtocol extends Protocol {
           }
       });
     }))().catch(reason => {
-      if(reason instanceof Error) 
+      if(reason instanceof Error)
         throw reason;
       else if(typeof reason === "string" || reason === undefined)
-        throw new Error(reason);
+        throw new Error(reason as string|undefined);
       else
         console.error(reason);
     });
