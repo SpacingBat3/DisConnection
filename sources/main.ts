@@ -3,15 +3,7 @@ import {
   WebSocketClose
 } from "./transport/websocket";
 
-export {
-  WebSocket
-};
+export { WebSocket, WebSocketClose };
 
-import type {
-  HookFn
-} from "./transport/protocol";
-
-export type {
-  HookFn,
-  WebSocketClose
-};
+import type { HookFn } from "./transport/protocol";
+export type { HookFn };
