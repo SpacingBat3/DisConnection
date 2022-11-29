@@ -1,4 +1,6 @@
 import kolor from "@spacingbat3/kolor";
+import type { colors } from "@spacingbat3/kolor";
+import { format, debug } from "util";
 
 /** Generic type for Discord's incoming messages format. */
 interface Message<C extends string, T extends string|never> {
@@ -125,7 +127,7 @@ type HookSignatures = {
   [P in hookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
     ? [request: Message<C,T>] : P extends infer C extends code ? [request: Message<C,never>] : never;
 };
-export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<void>;
+export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<undefined|number>;
 type HookMap = {
   [P in hookName]: {
     set: Set<HookFn<P>>;
@@ -150,23 +152,38 @@ export abstract class Protocol {
       active: true
     }
   } satisfies Partial<HookMap>), {}) as HookMap;
-  public log(message:string, ...args:unknown[]) {
-    console.log(kolor.bold(kolor.magentaBright(`[${this.name}]`)), message,...args);
+  #console?: Console;
+  #color?: keyof typeof colors;
+  public log(...args:unknown[]) {
+    if(this.#console === undefined) return;
+    const badge = this.#color === undefined
+      ? kolor.bold(`[${this.name}] %s`)
+      : kolor.bold(kolor[this.#color](`[${this.name}] %s`));
+    this.#console.log(badge, format(...args));
+  }
+  protected error(...args:unknown[]) {
+    this.#console?.error(kolor.red(kolor.bold(`[${this.name}]`)+" %s"),format(...args));
+  }
+  protected debug(...args:unknown[]) {
+    this.debug = debug(`dc-${this.name}`);
+    this.debug(...args);
   }
   public isDestroyed() {
     return this.#destroyed;
   }
   public destroy() {
-    const destroyError = new Error("Class has been already destroyed!");
+    const destroyError = new Error("Object has been destroyed!");
     if(this.#destroyed)
       throw destroyError;
     const destroyFunc = () => { throw destroyError; };
     this.stopServer();
     this.addHook = this.anyHooksActive = this.getHooks = destroyFunc;
     this.removeAllHooks = this.removeHook = this.toggleHooks = destroyFunc;
-    this.stopServer = this.log = destroyFunc;
+    this.stopServer = this.log = this.debug = destroyFunc;
     (Object.keys(this.#hooks) as hookName[]).forEach(key => this.removeAllHooks(key));
     this.#hooks = Object.freeze(this.#hooks);
+    if(this.#console !== undefined)
+      this.#console = Object.freeze(this.#console);
     this.#destroyed = true;
   }
   /**
@@ -252,13 +269,19 @@ export abstract class Protocol {
     this.#hooks[name].active = active;
     return this.anyHooksActive(name);
   }
+  constructor (cConsole:Console|null = console) {
+    if(cConsole !== null) this.#console = cConsole;
+  }
   /**
    * This method maps incomming messages from transports to outgoing messages
    * with partially-filled data, i.e. nothing is being resolved as it takes
    * place in the official Discord client.
    * 
    * @param message Incomming message from transports
+   * 
    * @returns Outgoing message that can be send as a response.
+   * 
+   * @since v1.0.0
    */
   static messageResponse(message: Message<string,string|never>) {
     const browserReq = /^(INVITE|GUILD_TEMPLATE)_BROWSER$/;

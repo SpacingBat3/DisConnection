@@ -81,13 +81,18 @@ export class WebSocketProtocol extends Protocol {
     });
   }
   public details?: Promise<ServerDetails>;
-  constructor(validOrigins:(RegExp|string)[]) {
-    super();
+  /** Creates new instance of {@link WebSocketProtocol} class.
+   * 
+   * @param validOrigins Whitelist of client origins as {@link RegExp} patterns or strings.
+   * @param console A {@link Console} instance used within class (uses global
+   * `console` instance by the default).
+   * 
+   * @throws {@link Error} if server couldn't be created within given port range.
+   */
+  constructor(validOrigins:(RegExp|string)[], console?:Console|null) {
+    super(console);
     const details = getServer(6463, 6472);
     this.details = details;
-    void details
-      .then(v => v.port)
-      .then(port => this.log("Opened at port: %s",port));
     // Async block
     (async() => (await details).server.on("connection", (client, req) => {
       /** Whenever origin passes given rule. */
@@ -100,13 +105,13 @@ export class WebSocketProtocol extends Protocol {
       }
       // Verify client trust.
       if(validOrigins.find(passingRule) === undefined) {
-        console.debug(`[${this.name}] Blocked request from origin '${req.headers.origin??"UNKNOWN"}'. (not trusted)`);
+        this.debug(`Blocked request from origin '${req.headers.origin??"UNKNOWN"}'. (not trusted)`);
         client.close(WebSocketClose.PolicyViolation,"Client is not trusted.");
         return;
       }
       // Check if clients are supported
       if(unsupportedOrigins.find(passingRule) !== undefined) {
-        console.debug(`[${this.name}] Blocked request from origin '${req.headers.origin??"UNKNOWN"}'. (not supported)`);
+        this.debug(`Blocked request from origin '${req.headers.origin??"UNKNOWN"}'. (not supported)`);
         client.close(WebSocketClose.PolicyViolation,"Client is not supported.");
         return;
       }
@@ -165,19 +170,19 @@ export class WebSocketProtocol extends Protocol {
             const type = typeof parsedData.args["type"] === "string" ?
               parsedData.cmd+":"+parsedData.args["type"] : parsedData.cmd;
             const msg = `Request of type: '${type}' is currently not supported.`;
-            console.error(`[${this.name}] %s`, msg);
-            console.debug(`[${this.name}] Request %s`, JSON.stringify(parsedData,undefined,4));
+            this.error(msg);
+            this.debug("Request %s", JSON.stringify(parsedData,undefined,4));
             client.close(WebSocketClose.InvalidPayload, msg);
           }
           // Unknown text message error
           else if(!isBinary) {
             const msg = `Could not handle the packed text data: '${packetString}'.`;
-            console.error(`[${this.name}] %s`, msg);
+            this.error(msg);
             client.close(WebSocketClose.InvalidPayload, msg);
           }
           // Unknown binary data transfer error
           else {
-            console.error(`[${this.name}] Unknown data transfer (not text).`);
+            this.error("Unknown data transfer (not text).");
             client.close(WebSocketClose.UnsupportedData, "Unknown data transfer");
           }
       });
@@ -187,7 +192,7 @@ export class WebSocketProtocol extends Protocol {
       else if(typeof reason === "string" || reason === undefined)
         throw new Error(reason as string|undefined);
       else
-        console.error(reason);
+        this.error(reason);
     });
   }
 }
