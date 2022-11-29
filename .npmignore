@@ -1,7 +1,10 @@
 # Do not include docs in Node packages.
 docs/
+# Exclude junk
+cache/
 # Exclude TypeScript-related files
 sources/
 tsconfig.json
 # Exclude linter configuration
 .eslintrc.json
+.gitignore
