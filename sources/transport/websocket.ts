@@ -136,7 +136,7 @@ export class WebSocketProtocol extends Protocol {
                   this.anyHooksActive(`${code}_${type}`)
                 ];
                 if(isActive)
-                  void Promise.all(hooks.map(hook => hook(message)))
+                  void Promise.all(hooks.map(hook => hook(message,req.headers.origin??null)))
                     .then(result => {
                       const code = result.find(code => typeof code === "number" && code > 0);
                       if(code === undefined)
@@ -159,7 +159,7 @@ export class WebSocketProtocol extends Protocol {
               this.anyHooksActive(code)
             ];
             if(isActive)
-              void Promise.all(hooks.map(hook => (hook)(message as never)))
+              void Promise.all(hooks.map(hook => (hook)(message as never,req.headers.origin??null)))
                 .then(result => {
                   const code = result.find(code => typeof code === "number" && code > 0);
                   if(code === undefined)

@@ -125,7 +125,7 @@ type hookName = typeof hookNames[number];
 
 type HookSignatures = {
   [P in hookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
-    ? [request: Message<C,T>] : P extends infer C extends code ? [request: Message<C,never>] : never;
+    ? [request: Message<C,T>, origin: string|null] : P extends infer C extends code ? [request: Message<C,never>, origin: string|null] : never;
 };
 export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<undefined|number>;
 type HookMap = {
