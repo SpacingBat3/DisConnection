@@ -130,7 +130,7 @@ type HookSignatures = {
 export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<undefined|number>;
 type HookMap = {
   [P in hookName]: {
-    set: Set<HookFn<P>>;
+    list: Set<HookFn<P>>;
     active: boolean;
   };
 };
@@ -150,8 +150,8 @@ export abstract class Protocol {
     [cur]: {
       list: new Set<HookFn<typeof cur>>(),
       active: true
-    }
-  } satisfies Partial<HookMap>), {}) as HookMap;
+    } satisfies Partial<HookMap>[typeof cur]
+  }), {}) as HookMap;
   #console?: Console;
   #color?: keyof typeof colors;
   public log(...args:unknown[]) {
@@ -198,9 +198,9 @@ export abstract class Protocol {
   public addHook<T extends hookName>(name: T, value: HookFn<T>) {
     if(!(name in this.#hooks) || typeof value !== "function")
       throw new TypeError("Invalid parameters type!");
-    const wereAddedBefore = this.#hooks[name].set.has(value);
-    this.#hooks[name].set.add(value);
-    return wereAddedBefore ? false : [...this.#hooks[name].set].length;
+    const wereAddedBefore = this.#hooks[name].list.has(value);
+    this.#hooks[name].list.add(value);
+    return wereAddedBefore ? false : [...this.#hooks[name].list].length;
   }
   /**
    * Removes given hook function from give the hook list.
@@ -213,7 +213,7 @@ export abstract class Protocol {
   public removeHook<T extends hookName>(name: T, value: HookFn<T>) {
     if(!(name in this.#hooks) || typeof value !== "function")
       throw new TypeError("Invalid parameters type!");
-    return this.#hooks[name].set.delete(value);
+    return this.#hooks[name].list.delete(value);
   }
   /**
    * Removes **all** hooks from the given hook list.
@@ -226,8 +226,8 @@ export abstract class Protocol {
   public removeAllHooks<T extends hookName>(name: T) {
     if(!(name in this.#hooks))
       throw new TypeError("Invalid parameters type!");
-    const returnValue = [...this.#hooks[name].set].length > 0;
-    this.#hooks[name].set.clear();
+    const returnValue = [...this.#hooks[name].list].length > 0;
+    this.#hooks[name].list.clear();
     return returnValue;
   }
   /**
@@ -241,7 +241,7 @@ export abstract class Protocol {
   public getHooks<T extends hookName>(name:T) {
     if(!(name in this.#hooks))
       throw new TypeError(`Hook list "${name}" is invalid!`);
-    return [...this.#hooks[name].set];
+    return [...this.#hooks[name].list];
   }
   /**
    * Whenever any of hooks will execute by server.
@@ -252,7 +252,7 @@ export abstract class Protocol {
    * @since v1.0.0
    */
   public anyHooksActive<T extends hookName>(name:T) {
-    if([...this.#hooks[name].set].length === 0)
+    if([...this.#hooks[name].list].length === 0)
       return false;
     return this.#hooks[name].active;
   }
