@@ -1,6 +1,13 @@
 import { Server, WebSocketServer } from "ws";
-//import kolor from "@spacingbat3/kolor";
-import {Protocol, isMessage, staticMessages, isJSONParsable, knownMsgEl } from "./protocol";
+
+import {
+  Protocol,
+  isMessage,
+  staticMessages,
+  isJSONParsable,
+  knownMsgEl,
+  fgColor
+} from "./protocol";
 
 /**
  * A list of standard status codes used within WebSocket communication at
@@ -89,8 +96,8 @@ export class WebSocketProtocol extends Protocol {
    * 
    * @throws {@link Error} if server couldn't be created within given port range.
    */
-  constructor(validOrigins:(RegExp|string)[], console?:Console|null) {
-    super(console);
+  constructor(validOrigins:(RegExp|string)[], console?:Console|null, color: fgColor = "magenta") {
+    super(console,color);
     const details = getServer(6463, 6472);
     this.details = details;
     // Async block

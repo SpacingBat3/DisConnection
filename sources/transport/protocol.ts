@@ -128,6 +128,7 @@ type HookSignatures = {
     ? [request: Message<C,T>, origin: string|null] : P extends infer C extends code ? [request: Message<C,never>, origin: string|null] : never;
 };
 export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<undefined|number>;
+export type fgColor = Exclude<keyof typeof colors,`bg${Capitalize<keyof typeof colors>}`>;
 type HookMap = {
   [P in hookName]: {
     list: Set<HookFn<P>>;
@@ -153,12 +154,12 @@ export abstract class Protocol {
     } satisfies Partial<HookMap>[typeof cur]
   }), {}) as HookMap;
   #console?: Console;
-  #color?: keyof typeof colors;
+  #color?: fgColor;
   public log(...args:unknown[]) {
     if(this.#console === undefined) return;
     const badge = this.#color === undefined
-      ? kolor.bold(`[${this.name}] %s`)
-      : kolor.bold(kolor[this.#color](`[${this.name}] %s`));
+      ? kolor.bold(`[${this.name}]`)+" %s"
+      : kolor.bold(kolor[this.#color](`[${this.name}]`))+" %s";
     this.#console.log(badge, format(...args));
   }
   protected error(...args:unknown[]) {
@@ -269,8 +270,9 @@ export abstract class Protocol {
     this.#hooks[name].active = active;
     return this.anyHooksActive(name);
   }
-  constructor (cConsole:Console|null = console) {
+  constructor (cConsole:Console|null = console, color?: fgColor) {
     if(cConsole !== null) this.#console = cConsole;
+    if(color !== undefined) this.#color = color;
   }
   /**
    * This method maps incomming messages from transports to outgoing messages
