@@ -39,7 +39,7 @@ type messageParams<T extends string> = T extends "CHANNEL" ? {
  * Generic response checker, assumes Discord will do requests of certain type
  * based on `cmd` and `argsType` values.
  */
-export function isMessage<C,T>(data:unknown, cmd?: C&string|(C&string)[], argsType?: T&string): data is Message<C extends string ? C : string,T extends string ? T : never> {
+export function isMessage<C extends string,T>(data:unknown, cmd?: C|C[], argsType?: T&string): data is Message<C,T extends string ? T : never> {
   type typeofResult = "string" | "number" | "bigint" | "boolean" | "object" |
   "function" | "undefined";
   type typeofResolved<T extends typeofResult> =  T extends "string" ? string :
