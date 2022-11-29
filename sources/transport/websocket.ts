@@ -137,10 +137,15 @@ export class WebSocketProtocol extends Protocol {
                 ];
                 if(isActive)
                   void Promise.all(hooks.map(hook => hook(message)))
-                    .then(() => client.send(
-                      JSON.stringify(Protocol.messageResponse(message))
-                    )
-                    );
+                    .then(result => {
+                      const code = result.find(code => typeof code === "number" && code > 0);
+                      if(code === undefined)
+                        client.send(JSON.stringify(Protocol.messageResponse(message)));
+                      else {
+                        this.debug("Connection with client closed by hook with code: %d",code);
+                        client.close(code);
+                      }
+                    });
                 else
                   client.send(JSON.stringify(Protocol.messageResponse(message)));
                 return true;
@@ -154,10 +159,16 @@ export class WebSocketProtocol extends Protocol {
               this.anyHooksActive(code)
             ];
             if(isActive)
-              void Promise.all(hooks.map(hook => (hook as (v: typeof message)=>Promise<void>)(message)))
-                .then(() => client.send(
-                  JSON.stringify(Protocol.messageResponse(message))
-                ));
+              void Promise.all(hooks.map(hook => (hook)(message as never)))
+                .then(result => {
+                  const code = result.find(code => typeof code === "number" && code > 0);
+                  if(code === undefined)
+                    client.send(JSON.stringify(Protocol.messageResponse(message)));
+                  else {
+                    this.debug("Connection with client closed by hook with code: %d",code);
+                    client.close(code);
+                  }
+                });
             else
               client.send(JSON.stringify(Protocol.messageResponse(message)));
             return true;
