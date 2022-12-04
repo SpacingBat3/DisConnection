@@ -26,9 +26,24 @@ C extends "INVITE_BROWSER"|"GUILD_TEMPLATE_BROWSER" ? {
   /** An invitation code. */
   code: string;
 } : C extends "AUTHORIZE" ? {
-  scopes: string[];
+  /** An array of OAuth2 scopes. */
+  scopes: (
+    `applications.${
+      `builds.${"read"|"upload"}` |
+      `commands.${""|"permissions."}update` |
+      "entitlements" | "store.update"
+    }`|"bot"|"connections"|"dm_channels.read"|"email"|"gdm.join"|"guilds"|
+    `guilds.${"join"|"members.read"}`|"identify"|`${
+      "activities"|"messages"|"relationships"|`rpc.${"notifications"|"voice"}`
+    }.read`|`${"activities"|`rpc.${"activities"|"voice"}`}.write`|"voice"|
+    "webhook.incoming"
+  )[];
   /** An application's client_id. */
   client_id: string;
+  /** One-time use RPC token. */
+  rpc_token?: string;
+  /** A username of guest account to create if the user does not have Discord. */
+  username?: string;
 } : C extends "DEEP_LINK" ? T extends string ? {
   type: T;
   params: messageParams<T>;
