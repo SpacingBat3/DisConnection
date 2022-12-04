@@ -3,7 +3,9 @@ import {
   WebSocketClose
 } from "./transport/websocket";
 
-export { WebSocket, WebSocketClose };
+import { RPCActivity } from "./transport/protocol";
+
+export { WebSocket, WebSocketClose, RPCActivity };
 
 import type { HookFn } from "./transport/protocol";
 export type { HookFn };

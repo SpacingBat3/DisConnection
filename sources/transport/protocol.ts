@@ -2,6 +2,15 @@ import kolor from "@spacingbat3/kolor";
 import type { colors } from "@spacingbat3/kolor";
 import { format, debug } from "util";
 
+export const enum RPCActivity {
+  Game,
+  Listening,
+  Streaming,
+  Watching,
+  Custom,
+  Competing
+}
+
 /** Generic type for Discord's incoming messages format. */
 interface Message<C extends string, T extends string|never> {
   /** Message type/command. */
@@ -26,6 +35,56 @@ C extends "INVITE_BROWSER"|"GUILD_TEMPLATE_BROWSER" ? {
 } : {
   type: string;
   params: Record<string,unknown>;
+} : C extends "SET_ACTIVITY" ? {
+  /** The application's process id. */
+  pid: number;
+  activity: {
+    /** The activity name. */
+    name: string;
+    /** The activity type, one of {@link RPCActivity}. */
+    type: RPCActivity;
+    /** A stream URL, validated only when `type` is {@link RPCActivity.Listening}. */
+    url?: string;
+    /** A unix timestamp (in milliseconds) of when the activity was added to the user's session. */
+    created_at: number;
+    /** Unix timestamps for start and/or end of the activity. */
+    timestamps?: Partial<Record<"start"|"end", number>>;
+    /** Application ID for the activity. */
+    application_id?: number;
+    /** What the user is currently doing as a part of given activity. */
+    details: string;
+    /** The user's current party status. */
+    state?: string;
+    /** An emoji used for a custom status. */
+    emoji?: { name?: string; id?: number; animated?: string };
+    /** An information about the current party participating in the user's activity. */
+    party?: { id?: number; size?: [ current_size: number, max_size: number ] };
+    /** Images for the presence and their hover texts. */
+    assets?: Partial<Record<`${"large"|"small"}_${"image"|"text"}`, string>>;
+    /** Secrets for Rich Presence joining and specating. */
+    secrets?: Partial<Record<"join"|"specate"|"match", string>>;
+    /** Whether or not the activity is an instanced game session. */
+    instance?: boolean;
+    /**
+     * An integer in range 0-511 (unsigned, 9 bits) which identifies flags.
+     * 
+     * Bits in number has specified flag as seen in below table:
+     * |  BIT | FLAG                        |
+     * | ---- | --------------------------- |
+     * | 1    |`INSTANCE`                   |
+     * | 2    |`JOIN`                       |
+     * | 3    |`SPECATE`                    |
+     * | 4    |`JOIN_REQUEST`               |
+     * | 5    |`SYNC`                       |
+     * | 6    |`PLAY`                       |
+     * | 7    |`PARTY_PRIVACY_FRIENDS`      |
+     * | 8    |`PARTY_PRIVACY_VOICE_CHANNEL`|
+     * | 9    |`EMBEDDED`                   |
+     */
+    flags?: number;
+    /** An array of buttons shown in the Rich Presence. */
+    buttons?: { label:string; url: string }[] & { length: 0|1|2 };
+  };
 } : Record<string,unknown>;
 
 type messageParams<T extends string> = T extends "CHANNEL" ? {
@@ -112,7 +171,7 @@ export const staticMessages = Object.freeze({
 } as const);
 
 export const knownMsgEl = Object.freeze({
-  codes: Object.freeze(["INVITE_BROWSER","GUILD_TEMPLATE_BROWSER","AUTHORIZE","DEEP_LINK"] as const),
+  codes: Object.freeze(["INVITE_BROWSER","GUILD_TEMPLATE_BROWSER","AUTHORIZE","DEEP_LINK","SET_ACTIVITY"] as const),
   types: Object.freeze(["CHANNEL"] as const)
 });
 

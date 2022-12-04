@@ -28,4 +28,4 @@ for ESM projects as well.
   - [X] `GUILD_TEMPLATE_BROWSER`
   - [X] `INVITE_LINK`
   - [X] `AUTHORIZE`
-  - [ ] `SET_ACTIVITY` (will do once I will make sure the current protocol implementation is OK)
+  - [X] `SET_ACTIVITY` (experimental)
