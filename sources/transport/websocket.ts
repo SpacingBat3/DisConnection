@@ -20,36 +20,89 @@ import {
  * [RFC 6455]: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1  "RFC 6455: The WebSocket protocol."
  */
 export const enum WebSocketClose {
-  /** Emmited on normal server closure. */
+  /**
+   * Indicates that connection went successfully.
+   */
   Ok = 1000,
-  /** Emmited when endpoint is going away, e.g. on navigation or server failure. */
+  /**
+   * Emmited when endpoint is going away, e.g. on navigation or server failure.
+   */
   GoingAway,
+  /**
+   * Emmitted once a protocol error occurs.
+   */
   ProtocolError,
+  /**
+   * Emitted once server received a kind of data it couldn't accept, e.g. binary
+   * message on endpoints supporting only UTF-8 encoded data.
+   */
   UnsupportedData,
-  /** **Reserved**. It currently has no meaning, but that might change in the future. */
+  /**
+   * **Reserved**. It currently has no meaning, but that might change in the
+   * future.
+   */
   Reserved,
-  /** **Reserved**. Indicates lack of the status/code, althrough it was expected. */
+  /**
+   * **Reserved**. Indicates lack of the status/code, althrough it was expected.
+   */
   NoStatusReveived,
-  /** **Reserved**. Emmited when connection was closed abnormally, where status code was expected. */
+  /**
+   * **Reserved**. Emmited when connection was closed abnormally, where status
+   * code was expected.
+   */
   AbnormalClosure,
+  /**
+   * Indicates that server received a message with inconsitent data structure,
+   * e.g. a mixed UTF-8 encoded message that also includes the unrecognizable
+   * binary data.
+   */
   InvalidPayload,
+  /**
+   * Indicates that sent message violates the server's policy. This code is
+   * meant to be a generic status code that can be used if there's no suitable
+   * more suitable status codes (like {@link UnsupportedData} or {@link MessageTooBig}).
+   * It could also be used if details about the policy should be hidden.
+   */
   PolicyViolation,
+  /**
+   * Indicates that received payload by the server is too large to be processed.
+   */
   MessageTooBig,
   MandatoryExtension,
   InternalError,
   ServiceRestart,
-  /** Emmited when server is terminating connection due to the temporarily condition, e.g. server overload. */
+  /**
+   * Emmited when server is terminating connection due to the temporarily
+   * condition, e.g. server overload.
+   */
   TryAgainLater,
   BadGateway
 }
 
+/**
+ * An information about the WebSocket server, like the reserved number of the
+ * port and refference to the {@link Server} class.
+ */
 interface ServerDetails {server: Server; port: number}
 
+/**
+ * Reserves a WebSocket simple server at given port range. Used by constructor
+ * of {@link WebSocketProtocol}.
+ * 
+ * @param start - first element of port range
+ * @param end - last element of port range
+ * 
+ * @returns
+ * 
+ * A {@link Promise} that resolves to object with the negotiated port number and the {@link Server} reference.
+ */
 function getServer(start:number,end:number) {
   function tryServer(port: number) {
     return new Promise<ServerDetails>(resolve => {
       if(port > end)
         throw new Error("All ports from given range are busy!");
+      if(parseInt(port.toString()) !== port)
+        throw new RangeError(`Number of port '${port}' is not an integer!`);
       const wss = new WebSocketServer({host: "127.0.0.1", port: port++});
       wss.once("listening", () => {
         resolve({
@@ -90,11 +143,10 @@ export class WebSocketProtocol extends Protocol {
   public details?: Promise<ServerDetails>;
   /** Creates new instance of {@link WebSocketProtocol} class.
    * 
-   * @param validOrigins Whitelist of client origins as {@link RegExp} patterns or strings.
-   * @param console A {@link Console} instance used within class (uses global
-   * `console` instance by the default).
+   * @param validOrigins - Whitelist of client origins as {@link RegExp} patterns or strings.
+   * @param console - {@link Console} instance used within class (defaults to {@link global.console}).
    * 
-   * @throws {@link Error} if server couldn't be created within given port range.
+   * @throws {@link Error} if server couldn't be created within a given port range.
    */
   constructor(validOrigins:(RegExp|string)[], console?:Console|null, color: fgColor = "magenta") {
     super(console,color);

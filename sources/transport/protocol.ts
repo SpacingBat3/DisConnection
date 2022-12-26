@@ -2,6 +2,10 @@ import kolor from "@spacingbat3/kolor";
 import type { colors } from "@spacingbat3/kolor";
 import { format, debug } from "util";
 
+/**
+ * The type of the activity displayed as a status message with its name (e.g.
+ * *Playing \<game\>* or *Listening to \<music\>*).
+ */
 export const enum RPCActivity {
   Game,
   Listening,
@@ -116,11 +120,13 @@ type messageParams<T extends string> = T extends "CHANNEL" ? {
 export function isMessage<C extends string,T>(data:unknown, cmd?: C|C[], argsType?: T&string): data is Message<C,T extends string ? T : never> {
   type typeofResult = "string" | "number" | "bigint" | "boolean" | "object" |
   "function" | "undefined";
+  /** Maps the result of `typeof` to the actual TypeScript type. */
   type typeofResolved<T extends typeofResult> =  T extends "string" ? string :
     T extends "number" ? number : T extends "bigint" ? bigint :
       T extends "boolean" ? boolean : T extends "object" ? object|null :
         T extends "function" ? (...args:unknown[])=>unknown :
           T extends "undefined" ? undefined : unknown;
+  /** Verifies if given value satisfies record of the given type. */
   function checkRecord<T extends (string|number|symbol)[], X extends typeofResult>(record:Record<string|number|symbol, unknown>,keys:T,arg:X): record is Record<T[number],typeofResolved<X>> {
     for(const key of keys)
       if(typeof record[key] !== arg)
@@ -164,6 +170,7 @@ export function isJSONParsable(text:string) {
   }
 }
 
+/** Static response messages sent by transports. */
 export const staticMessages = Object.freeze({
   /**
    * A fake, hard-coded Discord command to spoof the presence of
@@ -185,24 +192,45 @@ export const staticMessages = Object.freeze({
   }
 } as const);
 
+/**
+ * Known *elements* of message payloads, which tends to be either a `code` of
+ * `cmd` or `type` (for `DEEP_LINK`).
+ */
 export const knownMsgEl = Object.freeze({
   codes: Object.freeze(["INVITE_BROWSER","GUILD_TEMPLATE_BROWSER","AUTHORIZE","DEEP_LINK","SET_ACTIVITY"] as const),
   types: Object.freeze(["CHANNEL"] as const)
 });
 
+/**
+ * Flattened combination of `codes` and `types` from {@link knownMsgEl} used as
+ * an array of hook names.
+ */
 const hookNames = knownMsgEl.codes
   .flatMap(code => code === "DEEP_LINK" ? knownMsgEl.types.map(type => `${code}_${type}` as const) : code);
 
+/** Alias type for single element of `knownMsgEl.codes`. */
 type code = typeof knownMsgEl.codes[number];
+/** Alias type for single element of `knownMsgEl.types`. */
 type type = typeof knownMsgEl.types[number];
+/** Alias type for single hook name. */
 type hookName = typeof hookNames[number];
 
+/** An object that maps given hook names to their respective function argument truple. */
 type HookSignatures = {
   [P in hookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
     ? [request: Message<C,T>, origin: string|null] : P extends infer C extends code ? [request: Message<C,never>, origin: string|null] : never;
 };
+/** An alias which generates a function type from its signatures based on hook name. */
 export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<undefined|number>;
+/**
+ * An alias to list of the colors allowed to be used with `@spacingbat3/kolor`
+ * library. Used for tag color in the log message.
+ */
 export type fgColor = Exclude<keyof typeof colors,`bg${Capitalize<keyof typeof colors>}`>;
+/**
+ * Maps hook names to the final format of hook, used internally in the
+ * {@link Protocol} class.
+ */
 type HookMap = {
   [P in hookName]: {
     list: Set<HookFn<P>>;
@@ -213,13 +241,28 @@ type HookMap = {
 /**
  * A specification which defines Discord communication protocol used within
  * DisConnection. It is used for implemending various *transports*, like
- * WebSocket server or 
- * 
+ * WebSocket server or UNIX socket (IPC). This class is not designed to be used
+ * directly, but is meant to be extended by given transport implementation.
  */
 export abstract class Protocol {
+  /**
+   * A name which indicates the given implementation of the protocol.
+   */
   public abstract readonly name: string;
+  /**
+   * A {@link name} variant which contains all characters lowercase and contains
+   * replaced whitespaces with underscore (`_`).
+   */
+  public get safeName() {
+    return this.name.toLowerCase().replaceAll(/\s/g,"_");
+  }
+  /** A way to stop the server while {@link destroy}-ing the class structure. */
   protected abstract stopServer(): void;
   #destroyed = false;
+  /**
+   * An object that stores the information about all of the hooks assigned to
+   * the given transport.
+   */
   #hooks = hookNames.reduce<Partial<HookMap>>((prev,cur) => ({
     ...prev,
     [cur]: {
@@ -227,8 +270,11 @@ export abstract class Protocol {
       active: true
     } satisfies Partial<HookMap>[typeof cur]
   }), {}) as HookMap;
+  /** A {@link Console} instance used for logging within this class. */
   #console?: Console|undefined;
+  /** A {@link fgColor} used as a color of the badge within logged messages. */
   #color?: fgColor|undefined;
+  /** Writes a regular message (`log`) in the console to `stdout`. */
   public log(...args:unknown[]) {
     if(this.#console === undefined) return;
     const badge = this.#color === undefined
@@ -236,16 +282,44 @@ export abstract class Protocol {
       : kolor.bold(kolor[this.#color](`[${this.name}]`))+" %s";
     this.#console.log(badge, format(...args));
   }
+  /** Writes an error message to `stderr`. */
   protected error(...args:unknown[]) {
     this.#console?.error(kolor.red(kolor.bold(`[${this.name}]`)+" %s"),format(...args));
   }
+  /**
+   * Writes a debug message, which will be visible whenever `NODE_DEBUG`
+   * includes a `disconnection-{{@link #safeName}}`.
+   */
   protected debug(...args:unknown[]) {
-    this.debug = debug(`dc-${this.name}`);
+    this.debug = debug(`disconnection-${this.safeName}`);
     this.debug(...args);
   }
+  /**
+   * Whenever this class has been *destroyed*.
+   * 
+   * @see {@link destroy} for more details about this state.
+   */
   public isDestroyed() {
     return this.#destroyed;
   }
+  /**
+   * Removes references in class properties and methods either by replacing
+   * values with a reference to the function that throws an error (for methods
+   * and some required properties using getters) or sets them to a nullish value
+   * (for optional properties).
+   * 
+   * As it is hard to guarantee the Garbage Collector will ever deallocate
+   * memory after dereferencing all of the objects, the main goal is to make
+   * class no longer contain methods that may not make sense anymore to be used
+   * rather than implement any kind of the memory cleanup logic.
+   * 
+   * **Note: This operation is designed to be irreversible!** You will have to
+   * initialize the new class instance if you want to use given transport again.
+   * 
+   * @throws {@link Error} in case object has been already destroyed.
+   * 
+   * @since v1.1.0
+   */
   public destroy() {
     const destroyError = new Error("Object has been destroyed!");
     if(this.#destroyed) throw destroyError;
@@ -272,10 +346,11 @@ export abstract class Protocol {
   /**
    * Adds a hook to the given hook list if it doesn't exist in it.
    * 
-   * @param name A name of hook list.
-   * @param value A function that will be added to hook list.
+   * @param {T extends HookName} name - A name of hook list.
+   * @param value - A function that will be added to hook list.
    * 
    * @returns number of hooks of given key or `false` if value were added before
+   * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0
    */
   public addHook<T extends hookName>(name: T, value: HookFn<T>) {
@@ -288,9 +363,10 @@ export abstract class Protocol {
   /**
    * Removes given hook function from give the hook list.
    * 
-   * @param name A name of hook list.
+   * @param name - A name of hook list.
    * 
    * @returns whenever hook has been deleted
+   * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0
    */
   public removeHook<T extends hookName>(name: T, value: HookFn<T>) {
@@ -301,14 +377,15 @@ export abstract class Protocol {
   /**
    * Removes **all** hooks from the given hook list.
    * 
-   * @param name A name of hook list.
+   * @param name - A name of hook list.
    * 
    * @returns if hook list wasn't empty before removing — values from it
+   * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
    */
   public removeAllHooks<T extends hookName>(name: T) {
     if(!(name in this.#hooks))
-      throw new TypeError("Invalid parameters type!");
+      throw new TypeError(`Hook list "${name}" is invalid!`);
     const returnValue = [...this.#hooks[name].list].length > 0;
     this.#hooks[name].list.clear();
     return returnValue;
@@ -316,9 +393,10 @@ export abstract class Protocol {
   /**
    * Lists all hooks from the given hook list.
    * 
-   * @param name A name of hook list.
+   * @param name - A name of hook list.
    * 
    * @returns `Array` of hooks
+   * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
    */
   public getHooks<T extends hookName>(name:T) {
@@ -329,12 +407,15 @@ export abstract class Protocol {
   /**
    * Whenever any of hooks will execute by server.
    * 
-   * @param name A name of hook list.
+   * @param name - A name of hook list.
    * 
    * @returns whenever hooks are *active*
+   * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
    */
   public anyHooksActive<T extends hookName>(name:T) {
+    if(!(name in this.#hooks))
+      throw new TypeError(`Hook list "${name}" is invalid!`);
     if([...this.#hooks[name].list].length === 0)
       return false;
     return this.#hooks[name].active;
@@ -342,13 +423,16 @@ export abstract class Protocol {
   /**
    * Switches state of a given hook list, which can either disable it or not.
    * 
-   * @param name A name of hook list.
-   * @param active New state of hooks. Defaults to negation of previous state.
+   * @param name - A name of hook list.
+   * @param active - New state of hooks. Defaults to negation of previous state.
    * 
    * @returns current state of given hook (i.e if it is active or not)
+   * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0
    */
   public toggleHooks<T extends hookName>(name: T, active = !this.#hooks[name].active) {
+    if(!(name in this.#hooks) || typeof active !== "boolean")
+      throw new TypeError("Invalid parameters type!");
     this.#hooks[name].active = active;
     return this.anyHooksActive(name);
   }
@@ -361,10 +445,9 @@ export abstract class Protocol {
    * with partially-filled data, i.e. nothing is being resolved as it takes
    * place in the official Discord client.
    * 
-   * @param message Incomming message from transports
+   * @param message - Incomming message from transports.
    * 
    * @returns Outgoing message that can be send as a response.
-   * 
    * @since v1.0.0
    */
   static messageResponse(message: Message<string,string|never>) {
