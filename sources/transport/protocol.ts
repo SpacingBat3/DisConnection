@@ -227,8 +227,8 @@ export abstract class Protocol {
       active: true
     } satisfies Partial<HookMap>[typeof cur]
   }), {}) as HookMap;
-  #console?: Console;
-  #color?: fgColor;
+  #console?: Console|undefined;
+  #color?: fgColor|undefined;
   public log(...args:unknown[]) {
     if(this.#console === undefined) return;
     const badge = this.#color === undefined
@@ -248,17 +248,25 @@ export abstract class Protocol {
   }
   public destroy() {
     const destroyError = new Error("Object has been destroyed!");
-    if(this.#destroyed)
-      throw destroyError;
-    const destroyFunc = () => { throw destroyError; };
+    if(this.#destroyed) throw destroyError;
     this.stopServer();
-    this.addHook = this.anyHooksActive = this.getHooks = destroyFunc;
-    this.removeAllHooks = this.removeHook = this.toggleHooks = destroyFunc;
-    this.stopServer = this.log = this.debug = destroyFunc;
-    (Object.keys(this.#hooks) as hookName[]).forEach(key => this.removeAllHooks(key));
+    const destroyFunc = () => { throw destroyError; };
+    const destroyHook = Object.freeze({
+      get list() { throw destroyError; },
+      get active() { throw destroyError; }
+    }) as unknown as Readonly<Record<"list"|"active", never>>;
     this.#hooks = Object.freeze(this.#hooks);
-    if(this.#console !== undefined)
-      this.#console = Object.freeze(this.#console);
+    // Clear lists of hooks and remove references to them.
+    (Object.keys(this.#hooks) as hookName[]).forEach(key => {
+      this.removeAllHooks(key);
+      this.#hooks[key] = destroyHook;
+      
+    });
+    // Make direct class methods throw an Error when used.
+    (Object.keys(this) as (string&keyof typeof this)[])
+      .filter(key => key !== "isDestroyed" && typeof this[key] === "function")
+      .map(key => (this[key] as unknown) = destroyFunc);
+    this.#console = this.#color = undefined;
     this.#destroyed = true;
   }
   /**
