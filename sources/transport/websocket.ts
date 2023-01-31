@@ -1,4 +1,7 @@
-import { Server, WebSocketServer } from "ws";
+import {
+  Server,
+  WebSocketServer
+} from "ws";
 
 import {
   Protocol,
@@ -83,7 +86,7 @@ export const enum WebSocketClose {
  * An information about the WebSocket server, like the reserved number of the
  * port and refference to the {@link Server} class.
  */
-interface ServerDetails {server: Server; port: number}
+export interface ServerDetails { server: Server; port: number }
 
 /**
  * Reserves a WebSocket simple server at given port range. Used by constructor
@@ -144,9 +147,9 @@ export class WebSocketProtocol extends Protocol {
   /** Creates new instance of {@link WebSocketProtocol} class.
    * 
    * @param validOrigins - Whitelist of client origins as {@link RegExp} patterns or strings.
-   * @param console - {@link Console} instance used within class (defaults to {@link global.console}).
+   * @param console - [`Console`](https://nodejs.org/api/console.html#console) instance used within class (defaults to {@link global.console}).
    * 
-   * @throws {@link Error} if server couldn't be created within a given port range.
+   * @throws - {@link Error} if server couldn't be created within a given port range.
    */
   constructor(validOrigins:(RegExp|string)[], console?:Console|null, color: fgColor = "magenta") {
     super(console,color);

@@ -1,5 +1,4 @@
-import kolor from "@spacingbat3/kolor";
-import type { colors } from "@spacingbat3/kolor";
+import kolor, { type colors } from "@spacingbat3/kolor";
 import { format, debug } from "util";
 
 /**
@@ -16,102 +15,97 @@ export const enum RPCActivity {
 }
 
 /** Generic type for Discord's incoming messages format. */
-interface Message<C extends string, T extends string|never> {
+export interface Message<C extends string, T extends string|never> {
   /** Message type/command. */
   cmd: C;
-  /** Message arguments. */
-  args: messageArgs<C, T>;
   /** Nonce indentifying the communication. */
   nonce: string;
+  /** Message arguments. */
+  args: C extends "INVITE_BROWSER"|"GUILD_TEMPLATE_BROWSER" ? {
+    /** An invitation code. */
+    code: string;
+  } : C extends "AUTHORIZE" ? {
+    /** An array of OAuth2 scopes. */
+    scopes: (
+      `applications.${
+        `builds.${"read"|"upload"}` |
+        `commands.${""|"permissions."}update` |
+        "entitlements" | "store.update"
+      }`|"bot"|"connections"|"dm_channels.read"|"email"|"gdm.join"|"guilds"|
+      `guilds.${"join"|"members.read"}`|"identify"|`${
+        "activities"|"messages"|"relationships"|`rpc.${"notifications"|"voice"}`
+      }.read`|`${"activities"|`rpc.${"activities"|"voice"}`}.write`|"voice"|
+      "webhook.incoming"
+    )[];
+    /** An application's client_id. */
+    client_id: string;
+    /** One-time use RPC token. */
+    rpc_token?: string;
+    /** A username of guest account to create if the user does not have Discord. */
+    username?: string;
+  } : C extends "DEEP_LINK" ? {
+    type: T extends string ? T : string;
+    params: T extends "CHANNEL" ? {
+      guildId: string;
+      channelId?: string;
+      search: string;
+      fingerprint: string;
+    } : Record<string,unknown>;
+  } : C extends "SET_ACTIVITY" ? {
+    /** The application's process id. */
+    pid: number;
+    activity: {
+      /** The activity name. */
+      name: string;
+      /** The activity type, one of {@link RPCActivity}. */
+      type: RPCActivity;
+      /** A stream URL, validated only when `type` is {@link RPCActivity.Listening}. */
+      url?: string;
+      /** A unix timestamp (in milliseconds) of when the activity was added to the user's session. */
+      created_at: number;
+      /** Unix timestamps for start and/or end of the activity. */
+      timestamps?: Partial<Record<"start"|"end", number>>;
+      /** Application ID for the activity. */
+      application_id?: number;
+      /** What the user is currently doing as a part of given activity. */
+      details: string;
+      /** The user's current party status. */
+      state?: string;
+      /** An emoji used for a custom status. */
+      emoji?: { name?: string; id?: number; animated?: string };
+      /** An information about the current party participating in the user's activity. */
+      party?: { id?: number; size?: [ current_size: number, max_size: number ] };
+      /** Images for the presence and their hover texts. */
+      assets?: Partial<Record<`${"large"|"small"}_${"image"|"text"}`, string>>;
+      /** Secrets for Rich Presence joining and specating. */
+      secrets?: Partial<Record<"join"|"specate"|"match", string>>;
+      /** Whether or not the activity is an instanced game session. */
+      instance?: boolean;
+      /**
+       * An integer in range 0-511 (unsigned, 9 bits) which identifies flags.
+       *
+       * @summary
+       *
+       * Bits in number has specified flag as seen in below table:
+       *
+       * |  BIT | FLAG                        |
+       * | ---- | --------------------------- |
+       * | 1    |`INSTANCE`                   |
+       * | 2    |`JOIN`                       |
+       * | 3    |`SPECATE`                    |
+       * | 4    |`JOIN_REQUEST`               |
+       * | 5    |`SYNC`                       |
+       * | 6    |`PLAY`                       |
+       * | 7    |`PARTY_PRIVACY_FRIENDS`      |
+       * | 8    |`PARTY_PRIVACY_VOICE_CHANNEL`|
+       * | 9    |`EMBEDDED`                   |
+       */
+      flags?: number;
+      /** An array of buttons shown in the Rich Presence. */
+      buttons?: { label:string; url: string }[] & { length: 0|1|2 };
+    };
+  } : Record<string,unknown>;
 }
-
-type messageArgs<C extends string, T extends string|never> =
-C extends "INVITE_BROWSER"|"GUILD_TEMPLATE_BROWSER" ? {
-  /** An invitation code. */
-  code: string;
-} : C extends "AUTHORIZE" ? {
-  /** An array of OAuth2 scopes. */
-  scopes: (
-    `applications.${
-      `builds.${"read"|"upload"}` |
-      `commands.${""|"permissions."}update` |
-      "entitlements" | "store.update"
-    }`|"bot"|"connections"|"dm_channels.read"|"email"|"gdm.join"|"guilds"|
-    `guilds.${"join"|"members.read"}`|"identify"|`${
-      "activities"|"messages"|"relationships"|`rpc.${"notifications"|"voice"}`
-    }.read`|`${"activities"|`rpc.${"activities"|"voice"}`}.write`|"voice"|
-    "webhook.incoming"
-  )[];
-  /** An application's client_id. */
-  client_id: string;
-  /** One-time use RPC token. */
-  rpc_token?: string;
-  /** A username of guest account to create if the user does not have Discord. */
-  username?: string;
-} : C extends "DEEP_LINK" ? T extends string ? {
-  type: T;
-  params: messageParams<T>;
-} : {
-  type: string;
-  params: Record<string,unknown>;
-} : C extends "SET_ACTIVITY" ? {
-  /** The application's process id. */
-  pid: number;
-  activity: {
-    /** The activity name. */
-    name: string;
-    /** The activity type, one of {@link RPCActivity}. */
-    type: RPCActivity;
-    /** A stream URL, validated only when `type` is {@link RPCActivity.Listening}. */
-    url?: string;
-    /** A unix timestamp (in milliseconds) of when the activity was added to the user's session. */
-    created_at: number;
-    /** Unix timestamps for start and/or end of the activity. */
-    timestamps?: Partial<Record<"start"|"end", number>>;
-    /** Application ID for the activity. */
-    application_id?: number;
-    /** What the user is currently doing as a part of given activity. */
-    details: string;
-    /** The user's current party status. */
-    state?: string;
-    /** An emoji used for a custom status. */
-    emoji?: { name?: string; id?: number; animated?: string };
-    /** An information about the current party participating in the user's activity. */
-    party?: { id?: number; size?: [ current_size: number, max_size: number ] };
-    /** Images for the presence and their hover texts. */
-    assets?: Partial<Record<`${"large"|"small"}_${"image"|"text"}`, string>>;
-    /** Secrets for Rich Presence joining and specating. */
-    secrets?: Partial<Record<"join"|"specate"|"match", string>>;
-    /** Whether or not the activity is an instanced game session. */
-    instance?: boolean;
-    /**
-     * An integer in range 0-511 (unsigned, 9 bits) which identifies flags.
-     * 
-     * Bits in number has specified flag as seen in below table:
-     * |  BIT | FLAG                        |
-     * | ---- | --------------------------- |
-     * | 1    |`INSTANCE`                   |
-     * | 2    |`JOIN`                       |
-     * | 3    |`SPECATE`                    |
-     * | 4    |`JOIN_REQUEST`               |
-     * | 5    |`SYNC`                       |
-     * | 6    |`PLAY`                       |
-     * | 7    |`PARTY_PRIVACY_FRIENDS`      |
-     * | 8    |`PARTY_PRIVACY_VOICE_CHANNEL`|
-     * | 9    |`EMBEDDED`                   |
-     */
-    flags?: number;
-    /** An array of buttons shown in the Rich Presence. */
-    buttons?: { label:string; url: string }[] & { length: 0|1|2 };
-  };
-} : Record<string,unknown>;
-
-type messageParams<T extends string> = T extends "CHANNEL" ? {
-  guildId: string;
-  channelId?: string;
-  search: string;
-  fingerprint: string;
-} : Record<string,unknown>;
 
 /**
  * Generic response checker, assumes Discord will do requests of certain type
@@ -205,8 +199,13 @@ export const knownMsgEl = Object.freeze({
  * Flattened combination of `codes` and `types` from {@link knownMsgEl} used as
  * an array of hook names.
  */
-const hookNames = knownMsgEl.codes
-  .flatMap(code => code === "DEEP_LINK" ? knownMsgEl.types.map(type => `${code}_${type}` as const) : code);
+const hookNames = Object.freeze(
+  knownMsgEl.codes.flatMap(
+    code => code === "DEEP_LINK" ? knownMsgEl.types.map(
+      type => `${code}_${type}` as const
+    ) : code
+  )
+);
 
 /** Alias type for single element of `knownMsgEl.codes`. */
 type code = typeof knownMsgEl.codes[number];
@@ -216,17 +215,19 @@ type type = typeof knownMsgEl.types[number];
 type hookName = typeof hookNames[number];
 
 /** An object that maps given hook names to their respective function argument truple. */
-type HookSignatures = {
+export type HookSignatures = {
   [P in hookName]: P extends `${infer C extends "DEEP_LINK"}_${infer T extends type}`
     ? [request: Message<C,T>, origin: string|null] : P extends infer C extends code ? [request: Message<C,never>, origin: string|null] : never;
 };
 /** An alias which generates a function type from its signatures based on hook name. */
 export type HookFn<T extends hookName> = (...args:HookSignatures[T]) => Promise<undefined|number>;
+
 /**
  * An alias to list of the colors allowed to be used with `@spacingbat3/kolor`
  * library. Used for tag color in the log message.
  */
 export type fgColor = Exclude<keyof typeof colors,`bg${Capitalize<keyof typeof colors>}`>;
+
 /**
  * Maps hook names to the final format of hook, used internally in the
  * {@link Protocol} class.
@@ -270,7 +271,7 @@ export abstract class Protocol {
       active: true
     } satisfies Partial<HookMap>[typeof cur]
   }), {}) as HookMap;
-  /** A {@link Console} instance used for logging within this class. */
+  /** A [`Console`](https://nodejs.org/api/console.html) instance used for logging within this class. */
   #console?: Console|undefined;
   /** A {@link fgColor} used as a color of the badge within logged messages. */
   #color?: fgColor|undefined;
