@@ -1,0 +1,27 @@
+{
+  "githubPages": true,
+  "hideGenerator": true,
+  "entryPoints": [
+    "./sources/main.ts",
+    "./sources/transport/websocket.ts",
+    "./sources/transport/protocol.ts"
+  ],
+  "commentStyle": "jsdoc",
+  "visibilityFilters": {},
+  "lightHighlightTheme": "github-light",
+  "darkHighlightTheme": "github-dark",
+  "gitRevision": "master",
+  "excludeNotDocumented": false,
+  "excludeInternal": false,
+  "excludeExternals": false,
+  "excludePrivate": true,
+  "intentionallyNotExported": [
+    "HookMap",
+    "HookName",
+    "type",
+    "code"
+  ],
+  "readme": "./Readme.md",
+  "name": "DisConnection",
+  "theme": "default"
+}

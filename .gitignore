@@ -3,6 +3,7 @@ node_modules/
 dist/
 cache/
 types/
+docs/
 # Hidden directories
 .*/
 !.github/
