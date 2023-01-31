@@ -92,6 +92,12 @@ export interface ServerDetails { server: Server; port: number }
  * Reserves a WebSocket simple server at given port range. Used by constructor
  * of {@link WebSocketProtocol}.
  * 
+ * @summary
+ * 
+ * If first element of range is greater than last, port lookup will be done
+ * downwards (e.g. `6472` → `6471`), else it will loopup ports upwards (e.g.
+ * `6463` → `6464`).
+ * 
  * @param start - first element of port range
  * @param end - last element of port range
  * 
@@ -99,28 +105,35 @@ export interface ServerDetails { server: Server; port: number }
  * 
  * A {@link Promise} that resolves to object with the negotiated port number and the {@link Server} reference.
  */
-function getServer(start:number,end:number) {
+async function getServer(start:number,end:number,...rest:[]):Promise<ServerDetails> {
+  function isIntegerPort(...args:number[]) {
+    return args.map(number => typeof number === "number" && (
+      number === parseInt(number.toString()) && number > 65535 || number < 0
+    )).reduce((b1,b2) => b1 && b2);
+  }
   function tryServer(port: number) {
     return new Promise<ServerDetails>(resolve => {
-      if(port > end)
+      if(start > end ? port < end : port > end)
         throw new Error("All ports from given range are busy!");
-      if(parseInt(port.toString()) !== port)
-        throw new RangeError(`Number of port '${port}' is not an integer!`);
-      const wss = new WebSocketServer({host: "127.0.0.1", port: port++});
+      const wss = new WebSocketServer({host: "127.0.0.1", port});
       wss.once("listening", () => {
         resolve({
           server: wss,
-          port: port-1
+          port
         });
         wss.removeAllListeners("error");
       });
       wss.once("error", () => {
-        resolve(tryServer(port));
+        resolve(tryServer(start > end ? port-1 : port+1));
         wss.close();
       });
     });
   }
-  return tryServer(start);
+  if(!isIntegerPort(start,end))
+    throw new TypeError("Invalid type of the arguments.");
+  if((rest as unknown[]).length > 0)
+    throw new TypeError("Too many function arguments (should be only one).");
+  return await tryServer(start);
 }
 
 /** A hard-coded blocklist of origins. */
