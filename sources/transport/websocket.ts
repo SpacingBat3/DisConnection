@@ -108,7 +108,7 @@ export interface ServerDetails { server: Server; port: number }
 async function getServer(start:number,end:number,...rest:[]):Promise<ServerDetails> {
   function isIntegerPort(...args:number[]) {
     return args.map(number => typeof number === "number" && (
-      number === parseInt(number.toString()) && number > 65535 || number < 0
+      number === parseInt(number.toString()) && number <= 65535 && number > 0
     )).reduce((b1,b2) => b1 && b2);
   }
   function tryServer(port: number) {
