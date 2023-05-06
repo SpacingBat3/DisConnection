@@ -16,8 +16,7 @@
   "excludeExternals": false,
   "excludePrivate": true,
   "intentionallyNotExported": [
-    "HookMap",
-    "HookName",
+    "hookName",
     "type",
     "code"
   ],
