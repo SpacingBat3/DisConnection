@@ -329,18 +329,30 @@ export abstract class Protocol {
     const destroyHook = Object.freeze({
       get list() { throw destroyError; },
       get active() { throw destroyError; }
-    }) as unknown as Readonly<Record<"list"|"active", never>>;
-    this.#hooks = Object.freeze(this.#hooks);
+    }) as Readonly<Record<"list"|"active", never>>;
     // Clear lists of hooks and remove references to them.
     (Object.keys(this.#hooks) as hookName[]).forEach(key => {
       this.removeAllHooks(key);
       this.#hooks[key] = destroyHook;
-      
     });
-    // Make direct class methods throw an Error when used.
-    (Object.keys(this) as (string&keyof typeof this)[])
-      .filter(key => key !== "isDestroyed" && typeof this[key] === "function")
-      .map(key => (this[key] as unknown) = destroyFunc);
+    // Make hooks immutable
+    this.#hooks = Object.freeze(this.#hooks);
+    const methods = new Set<string & keyof this>;
+    // Get list of methods from all object prototypes.
+    {
+      let currentProto:unknown = Object.getPrototypeOf(this);
+      while(currentProto !== Object.getPrototypeOf(Object)) {
+        if(currentProto === null || currentProto === undefined)
+          break;
+        Object.getOwnPropertyNames(currentProto)
+          .filter(key => key !== "isDestroyed" && typeof this[key as keyof this] === "function")
+          .forEach(key => methods.add(key as string & keyof this));
+        currentProto = Object.getPrototypeOf(currentProto);
+      }
+    }
+    // Make class methods throw an Error when used.
+    for(const key of methods.keys())
+      (this[key] as unknown) = destroyFunc;
     this.#console = this.#color = undefined;
     this.#destroyed = true;
   }
