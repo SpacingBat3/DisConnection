@@ -1,6 +1,6 @@
 {
   "name": "@spacingbat3/disconnection",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A pack of WebSocket Server and IPC to handle Discord cross-process communication.",
   "main": "./dist/main.js",
   "types": "./types/main.d.ts",
