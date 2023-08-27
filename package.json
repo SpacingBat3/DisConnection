@@ -36,11 +36,11 @@
     "@tsconfig/strictest": "^2.0.0",
     "@types/node": "^20.3.1",
     "@types/ws": "^8.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.44.0",
-    "@typescript-eslint/parser": "^5.44.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
     "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-import": "^2.26.0",
-    "typedoc": "^0.24.6",
+    "typedoc": "^0.25.0",
     "typescript": "^5.0.3"
   },
   "dependencies": {

@@ -1,5 +1,6 @@
 # Do not include docs in Node packages.
 docs/
+typedoc.json
 # Exclude junk
 cache/
 # Exclude TypeScript-related files
