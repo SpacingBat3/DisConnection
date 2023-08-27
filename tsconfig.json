@@ -12,7 +12,7 @@
     "sourceMap": true,
     /* Whenever to emit declaration files */
     "declaration": true,
-    /* Directrory in which are placed all emitted files */
+    /* Directory in which are placed all emitted files */
     "outDir": "./dist",
     /* Directory in which are placed declaration files */
     "declarationDir": "./types/",
