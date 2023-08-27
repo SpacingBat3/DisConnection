@@ -28,8 +28,10 @@
     "noEmitOnError": true,
     /* Emit ECMAScript classes, even with `target < ES2022` */
     "useDefineForClassFields": true,
-    /* Disable module elision behavior, banning entirely ESM syntax in CJS. */
-    "verbatimModuleSyntax": false
+    /* Disable module elision behaviour, banning entirely ESM syntax in CJS. */
+    "verbatimModuleSyntax": false,
+    /* Emit regular enums for compatibility with 'isolatedModules' and JS. */
+    "preserveConstEnums": true
   },
   "files": [
     "./sources/common/packet.ts",
