@@ -32,9 +32,10 @@
     "verbatimModuleSyntax": false
   },
   "files": [
-    "./sources/transport/protocol.ts",
+    "./sources/common/packet.ts",
+    "./sources/common/protocol.ts",
     "./sources/transport/websocket.ts",
-    //"./sources/transport/ipc.ts",
+    //"sources/transport/ipc.ts",
     "./sources/main.ts"
   ]
 }

@@ -4,7 +4,7 @@
   "entryPoints": [
     "./sources/main.ts",
     "./sources/transport/websocket.ts",
-    "./sources/transport/protocol.ts"
+    "./sources/common/protocol.ts"
   ],
   "commentStyle": "jsdoc",
   "visibilityFilters": {},

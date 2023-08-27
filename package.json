@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@spacingbat3/kolor": "^3.0.1",
+    "@spacingbat3/lss": "^1.2.0",
     "tslib": "^2.4.1",
     "ws": "^8.8.1"
   },

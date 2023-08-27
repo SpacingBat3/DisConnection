@@ -5,16 +5,19 @@ import {
 
 import {
   Protocol,
-  isMessage,
-  staticMessages,
-  isJSONParsable,
-  knownMsgEl,
   fgColor
-} from "./protocol";
+} from "../common/protocol";
+
+import {
+  isMessage,
+  staticEvents,
+  knownPacketID,
+  messageDefaultResponse
+} from "../common/packet";
 
 /**
  * A list of standard status codes used within WebSocket communication at
- * connection close. Currently, not all are documented there, althrough all were
+ * connection close. Currently, not all are documented there, although all were
  * listed, with some additional ones took from MDN.
  * 
  * Reference: [MDN], [RFC 6455].
@@ -28,11 +31,11 @@ export const enum WebSocketClose {
    */
   Ok = 1000,
   /**
-   * Emmited when endpoint is going away, e.g. on navigation or server failure.
+   * Emitted when endpoint is going away, e.g. on navigation or server failure.
    */
   GoingAway,
   /**
-   * Emmitted once a protocol error occurs.
+   * Emitted once a protocol error occurs.
    */
   ProtocolError,
   /**
@@ -46,16 +49,16 @@ export const enum WebSocketClose {
    */
   Reserved,
   /**
-   * **Reserved**. Indicates lack of the status/code, althrough it was expected.
+   * **Reserved**. Indicates lack of the status/code, although it was expected.
    */
-  NoStatusReveived,
+  NoStatusReceived,
   /**
-   * **Reserved**. Emmited when connection was closed abnormally, where status
+   * **Reserved**. Emitted when connection was closed abnormally, where status
    * code was expected.
    */
   AbnormalClosure,
   /**
-   * Indicates that server received a message with inconsitent data structure,
+   * Indicates that server received a message with inconsistent data structure,
    * e.g. a mixed UTF-8 encoded message that also includes the unrecognizable
    * binary data.
    */
@@ -75,7 +78,7 @@ export const enum WebSocketClose {
   InternalError,
   ServiceRestart,
   /**
-   * Emmited when server is terminating connection due to the temporarily
+   * Emitted when server is terminating connection due to the temporarily
    * condition, e.g. server overload.
    */
   TryAgainLater,
@@ -84,7 +87,7 @@ export const enum WebSocketClose {
 
 /**
  * An information about the WebSocket server, like the reserved number of the
- * port and refference to the {@link Server} class.
+ * port and reference to the {@link Server} class.
  */
 export interface ServerDetails { server: Server; port: number }
 
@@ -95,7 +98,7 @@ export interface ServerDetails { server: Server; port: number }
  * @summary
  * 
  * If first element of range is greater than last, port lookup will be done
- * downwards (e.g. `6472` → `6471`), else it will loopup ports upwards (e.g.
+ * downwards (e.g. `6472` → `6471`), else it will lookup ports upwards (e.g.
  * `6463` → `6464`).
  * 
  * @param start - first element of port range
@@ -132,7 +135,7 @@ async function getServer(start:number,end:number,...rest:[]):Promise<ServerDetai
   if(!isIntegerPort(start,end))
     throw new TypeError("Invalid type of the arguments.");
   if((rest as unknown[]).length > 0)
-    throw new TypeError("Too many function arguments (should be only one).");
+    throw new TypeError("Too many function arguments (should be 2).");
   return await tryServer(start);
 }
 
@@ -148,8 +151,8 @@ const unsupportedOrigins = [
  * Implements Discord client communication {@link Protocol} (between Discord
  * browser or any software with Discord integrations) via WebSocket server.
  */
-export class WebSocketProtocol extends Protocol {
-  name = "WebSocket";
+export class WebSocketProtocol extends Protocol<"WebSocket"> {
+  name = "WebSocket" as const;
   stopServer() {
     void this.details?.then(({server}) => {
       server.close();
@@ -190,20 +193,21 @@ export class WebSocketProtocol extends Protocol {
         client.close(WebSocketClose.PolicyViolation,"Client is not supported.");
         return;
       }
-      // Send "DISPATCH" event
-      client.send(JSON.stringify(staticMessages.dispatch));
+      // Send "READY" event
+      client.send(JSON.stringify(staticEvents.ready));
       client.on("message", (packet,isBinary) => {
         let packetString = "", parsedData:unknown = packet;
         if(!isBinary) {
           packetString = parsedData = Buffer.isBuffer(packet) || Array.isArray(packet) ?
             packet.toString() :
             String.fromCharCode(...new Uint8Array(packet));
-          if(isJSONParsable(packetString))
+          try {
             parsedData = JSON.parse(packetString);
+          } catch {};
         }
-        const hookParsed = knownMsgEl.codes.find(code => {
+        const hookParsed = knownPacketID.codes.find(code => {
           if(code === "DEEP_LINK")
-            return knownMsgEl.types.find(type => {
+            return knownPacketID.types.find(type => {
               if(isMessage(parsedData,code,type)) {
                 const message = Object.freeze(parsedData);
                 const [hooks,isActive] = [
@@ -215,14 +219,14 @@ export class WebSocketProtocol extends Protocol {
                     .then(result => {
                       const code = result.find(code => typeof code === "number" && code > 0);
                       if(code === undefined)
-                        client.send(JSON.stringify(Protocol.messageResponse(message)));
+                        client.send(JSON.stringify(messageDefaultResponse(message)));
                       else {
                         this.debug("Connection with client closed by hook with code: %d",code);
                         client.close(code);
                       }
                     });
                 else
-                  client.send(JSON.stringify(Protocol.messageResponse(message)));
+                  client.send(JSON.stringify(messageDefaultResponse(message)));
                 return true;
               }
               return false;
@@ -238,14 +242,14 @@ export class WebSocketProtocol extends Protocol {
                 .then(result => {
                   const code = result.find(code => typeof code === "number" && code > 0);
                   if(code === undefined)
-                    client.send(JSON.stringify(Protocol.messageResponse(message)));
+                    client.send(JSON.stringify(messageDefaultResponse(message)));
                   else {
                     this.debug("Connection with client closed by hook with code: %d",code);
                     client.close(code);
                   }
                 });
             else
-              client.send(JSON.stringify(Protocol.messageResponse(message)));
+              client.send(JSON.stringify(messageDefaultResponse(message)));
             return true;
           }
           return false;

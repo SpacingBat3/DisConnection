@@ -4,30 +4,21 @@
  *       worked on once there will be multiple transports, currently there's
  *       only a WebSocket.
  */
-import {
+export {
   WebSocketProtocol as WebSocket,
   WebSocketClose,
 } from "./transport/websocket";
 
-import { RPCActivity } from "./transport/protocol";
+export { RPCActivity } from "./common/packet";
 
-export {
-  WebSocket,
-  WebSocketClose,
-  RPCActivity
-};
-
-import type {
-  HookFn,
-  HookSignatures,
-  Message
-} from "./transport/protocol";
-
-import type { ServerDetails } from "./transport/websocket";
+export type {
+  Message,
+  UnknownMessage
+} from "./common/packet";
 
 export type {
   HookFn,
-  HookSignatures,
-  Message,
-  ServerDetails
-};
+  HookSignatures
+} from "./common/protocol";
+
+export type { ServerDetails } from "./transport/websocket";
