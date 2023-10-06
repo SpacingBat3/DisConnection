@@ -9,3 +9,7 @@ tsconfig.json
 # Exclude linter configuration
 .eslintrc.json
 .gitignore
+# Exclude hidden directories
+.*/
+# Exclude .tgz packages (`npm pack`)
+*.tgz

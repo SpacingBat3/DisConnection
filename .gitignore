@@ -10,3 +10,5 @@ docs/
 # Lockfiles
 *lock*
 !package-lock.json
+# .tgz packages (`npm pack`)
+*.tgz
