@@ -7,7 +7,6 @@
   "scripts": {
     "prepack": "tsc",
     "watch": "tsc --watch",
-    "postinstall": "tsc | true",
     "lint": "eslint . --ext .ts --cache --cache-location cache/eslint.json",
     "docs": "typedoc"
   },
