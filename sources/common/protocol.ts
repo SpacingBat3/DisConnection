@@ -1,7 +1,7 @@
 import kolor, { type colors } from "@spacingbat3/kolor";
 import sanitize from "@spacingbat3/lss";
-import { format, debug, deprecate } from "util";
-import { knownPacketID, Message, code, type, messageDefaultResponse } from "./packet";
+import { format, debug } from "util";
+import { knownPacketID, Message, code, type } from "./packet";
 
 import { getServer, type GenericServer, type ServerDetails } from "./server";
 
@@ -263,24 +263,4 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
     if(color !== undefined) this.#color = color;
     if(serverGetter !== undefined) this.details = getServer(...serverGetter);
   }
-  /**
-   * This function maps incoming messages from transports to outgoing messages
-   * with partially-filled data, i.e. nothing is being resolved as it takes
-   * place in the official Discord client.
-   * 
-   * This is used in place of default responses.
-   * 
-   * @param message - Incoming message from transports.
-   * 
-   * @returns Outgoing message that can be send as a response.
-   * 
-   * @since v1.0.0
-   * 
-   * @deprecated This was never expected to be a part of public API.
-   */
-  static readonly messageResponse = deprecate(
-    messageDefaultResponse,
-    "'Protocol.messageResponse()' is deprecated.",
-    "DEP0001WC"
-  );
 }
