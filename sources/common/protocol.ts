@@ -1,7 +1,9 @@
 import kolor, { type colors } from "@spacingbat3/kolor";
-import sanitizeLiteral from "@spacingbat3/lss";
+import sanitize from "@spacingbat3/lss";
 import { format, debug, deprecate } from "util";
 import { knownPacketID, Message, code, type, messageDefaultResponse } from "./packet";
+
+import { getServer, type GenericServer, type ServerDetails } from "./server";
 
 /**
  * Flattened combination of `codes` and `types` from {@link knownMsgEl} used as
@@ -51,17 +53,18 @@ export type fgColor = Exclude<keyof typeof colors,`bg${Capitalize<keyof typeof c
  * WebSocket server or UNIX socket (IPC). This class is not designed to be used
  * directly, but is meant to be extended by given transport implementation.
  */
-export abstract class Protocol<T extends string=string> {
+export abstract class Protocol<S extends GenericServer,T extends string=string> {
   /**
    * A name which indicates the given implementation of the protocol.
    */
   public abstract readonly name: T;
+  public details?: Promise<ServerDetails<S>>;
   /**
-   * A {@link name} variant which contains only English lowercase letters with
+   * A name variant which contains only English lowercase letters with
    * other incompatible characters replaced with underscore (`_`).
    */
   public get safeName() {
-    return sanitizeLiteral(this.name,"a-z","_","both");
+    return sanitize(this.name,"a-z","_","both");
   }
   /** A way to stop the server while {@link destroy}-ing the class structure. */
   protected abstract stopServer(): void;
@@ -255,9 +258,10 @@ export abstract class Protocol<T extends string=string> {
     this.#hooks[name].active = active;
     return this.anyHooksActive(name);
   }
-  constructor (cConsole:Console|null = console, color?: fgColor) {
+  constructor (serverGetter?: [start:number,end:number,getter:(port:number) => S], cConsole:Console|null = console, color?: fgColor) {
     if(cConsole !== null) this.#console = cConsole;
     if(color !== undefined) this.#color = color;
+    if(serverGetter !== undefined) this.details = getServer(...serverGetter);
   }
   /**
    * This function maps incoming messages from transports to outgoing messages

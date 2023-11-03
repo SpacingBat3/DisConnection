@@ -21,4 +21,9 @@ export type {
   HookSignatures
 } from "./common/protocol";
 
-export type { ServerDetails } from "./transport/websocket";
+import type { ServerDetails as GDetails } from "./common/server";
+import type { Server as WS } from "ws";
+type WSServerDetails = GDetails<WS>;
+
+/* For non-breaking compatibility with old WebSocket-only API. */
+export type { WSServerDetails as ServerDetails };
