@@ -9,6 +9,10 @@ export {
   WebSocketClose,
 } from "./transport/websocket";
 
+export {
+  IpcProtocol as IPC
+} from "./transport/ipc";
+
 export { RPCActivity } from "./common/packet";
 
 export type {
@@ -23,7 +27,12 @@ export type {
 
 import type { ServerDetails as GDetails } from "./common/server";
 import type { Server as WS } from "ws";
+import type { Server as IPC } from "node:net";
+
 type WSServerDetails = GDetails<WS>;
+type IPCServerDetails = GDetails<IPC>;
+
+export type { WSServerDetails, IPCServerDetails };
 
 /* For non-breaking compatibility with old WebSocket-only API. */
 export type { WSServerDetails as ServerDetails };

@@ -281,3 +281,9 @@ export function messageDefaultResponse(message: UnknownMessage) {
     nonce: message.nonce
   } as const);
 }
+export function isBinary(buffer:Buffer) {
+  const bufferString = buffer.toString("utf-8");
+  for(let i=0;i<buffer.length;++i) if(bufferString.charCodeAt(i) !== buffer[i])
+    return true;
+  return false;
+}

@@ -37,8 +37,8 @@
     "./sources/common/packet.ts",
     "./sources/common/protocol.ts",
     "./sources/common/server.ts",
+    "sources/transport/ipc.ts",
     "./sources/transport/websocket.ts",
-    //"sources/transport/ipc.ts",
     "./sources/main.ts"
   ]
 }
