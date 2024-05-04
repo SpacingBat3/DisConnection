@@ -205,9 +205,9 @@ export class WebSocketProtocol extends Protocol<"WebSocket"> {
             parsedData = JSON.parse(packetString);
           } catch {};
         }
-        const hookParsed = knownPacketID.codes.find(code => {
+        const hookParsed = knownPacketID.codes.some(code => {
           if(code === "DEEP_LINK")
-            return knownPacketID.types.find(type => {
+            return knownPacketID.types.some(type => {
               if(isMessage(parsedData,code,type)) {
                 const message = Object.freeze(parsedData);
                 const [hooks,isActive] = [
@@ -230,7 +230,7 @@ export class WebSocketProtocol extends Protocol<"WebSocket"> {
                 return true;
               }
               return false;
-            }) !== undefined;
+            });
           else if(isMessage(parsedData,code)) {
             const message = Object.freeze(parsedData);
             const [hooks,isActive] = [
@@ -253,12 +253,12 @@ export class WebSocketProtocol extends Protocol<"WebSocket"> {
             return true;
           }
           return false;
-        }) !== undefined;
+        });
         if(!hookParsed)
           // Unknown response error
           if(isMessage(parsedData)) {
             const type = typeof parsedData.args["type"] === "string" ?
-              parsedData.cmd+":"+parsedData.args["type"] : parsedData.cmd;
+              parsedData.cmd+"_"+parsedData.args["type"] : parsedData.cmd;
             const msg = `Request of type: '${type}' is currently not supported.`;
             this.error(msg);
             this.debug("Request %s", JSON.stringify(parsedData,undefined,4));
