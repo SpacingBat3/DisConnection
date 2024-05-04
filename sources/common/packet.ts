@@ -253,14 +253,14 @@ export function isMessage<C extends code|undefined=undefined,T extends type|unde
   if(argsType !== undefined && typeof (data as Message<"DEEP_LINK",string>).args.params === "object")
     switch(argsType) {
       case "CHANNEL":
-        if(!checkRecord(
+        if(!(checkRecord(
           (data as Message<"DEEP_LINK",string>).args.params,
           ["guildId", "channelId", "search", "fingerprint"] as const,
           "string"
-        ) || (data as Message<"DEEP_LINK","CHANNEL">).args.params.channelId !== undefined)
+        ) || (data as Message<"DEEP_LINK","CHANNEL">).args.params.channelId === undefined))
           return false;
     }
-  
+
   // All is "good enough"
   return true;
 }
