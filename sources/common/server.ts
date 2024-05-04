@@ -16,20 +16,20 @@ interface GetServerEvt {
 
 /**
  * Reserves a server at given port range. Used by constructor of
- * {@link WebSocketProtocol}.
- * 
+ * {@link Protocol}.
+ *
  * @summary
- * 
+ *
  * If first element of range is greater than last, port lookup will be done
  * downwards (e.g. `6472` → `6471`), else it will lookup ports upwards (e.g.
  * `6463` → `6464`).
- * 
+ *
  * @param start - first element of port range
  * @param end - last element of port range
  * @param getter - method to get the server somehow
- * 
+ *
  * @returns
- * 
+ *
  * A {@link Promise} that resolves to object with the negotiated port number and the {@link Server} reference.
  */
 export async function getServer<S extends GenericServer>(start:number,end:number,getter:(port:number) => S,events?:GetServerEvt,...rest:[]) {

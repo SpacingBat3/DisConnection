@@ -106,7 +106,7 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
   }
   /**
    * Whenever this class has been *destroyed*.
-   * 
+   *
    * @see {@link destroy} for more details about this state.
    */
   public isDestroyed() {
@@ -117,17 +117,17 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
    * values with a reference to the function that throws an error (for methods
    * and some required properties using getters) or sets them to a nullish value
    * (for optional properties).
-   * 
+   *
    * As it is hard to guarantee the Garbage Collector will ever deallocate
    * memory after dereferencing all of the objects, the goal is to prevent API
    * consumers from using class method that no longer make sense than implement
    * any kind of the memory cleanup logic.
-   * 
+   *
    * **Note: This operation is designed to be irreversible!** You will have to
    * initialize the new class instance if you want to use given transport again.
-   * 
+   *
    * @throws {@link Error} in case object has been already destroyed.
-   * 
+   *
    * @since v1.1.0
    */
   public destroy() {
@@ -167,10 +167,10 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
   }
   /**
    * Adds a hook to the given hook list if it doesn't exist in it.
-   * 
+   *
    * @param {T extends HookName} name - A name of hook list.
    * @param value - A function that will be added to hook list.
-   * 
+   *
    * @returns number of hooks of given key or `false` if value were added before
    * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0
@@ -183,10 +183,10 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
     return wereAddedBefore ? false : [...this.#hooks[name].list].length;
   }
   /**
-   * Removes given hook function from give the hook list.
-   * 
+   * Removes given hook function from the given hook list.
+   *
    * @param name - A name of hook list.
-   * 
+   *
    * @returns whenever hook has been deleted
    * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0
@@ -198,9 +198,9 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
   }
   /**
    * Removes **all** hooks from the given hook list.
-   * 
+   *
    * @param name - A name of hook list.
-   * 
+   *
    * @returns if hook list wasn't empty before removing — values from it
    * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
@@ -214,9 +214,9 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
   }
   /**
    * Lists all hooks from the given hook list.
-   * 
+   *
    * @param name - A name of hook list.
-   * 
+   *
    * @returns `Array` of hooks
    * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
@@ -228,9 +228,9 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
   }
   /**
    * Whenever any of hooks will execute by server.
-   * 
+   *
    * @param name - A name of hook list.
-   * 
+   *
    * @returns whenever hooks are *active*
    * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
@@ -244,10 +244,10 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
   }
   /**
    * Switches state of a given hook list, which can either disable it or not.
-   * 
+   *
    * @param name - A name of hook list.
    * @param active - New state of hooks. Defaults to negation of previous state.
-   * 
+   *
    * @returns current state of given hook (i.e if it is active or not)
    * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0

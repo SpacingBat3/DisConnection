@@ -19,9 +19,9 @@ import {
  * A list of standard status codes used within WebSocket communication at
  * connection close. Currently, not all are documented there, although all were
  * listed, with some additional ones took from MDN.
- * 
+ *
  * Reference: [MDN], [RFC 6455].
- * 
+ *
  * [MDN]: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code "CloseEvent.close – Web APIs | MDN"
  * [RFC 6455]: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1  "RFC 6455: The WebSocket protocol."
  */
@@ -106,10 +106,10 @@ export class WebSocketProtocol extends Protocol<Server,"WebSocket"> {
     });
   }
   /** Creates new instance of {@link WebSocketProtocol} class.
-   * 
+   *
    * @param validOrigins - Whitelist of client origins as {@link RegExp} patterns or strings.
    * @param console - [`Console`](https://nodejs.org/api/console.html#console) instance used within class (defaults to {@link global.console}).
-   * 
+   *
    * @throws - {@link Error} if server couldn't be created within a given port range.
    */
   constructor(validOrigins:(RegExp|string)[], console?:Console|null, color: fgColor = "magenta") {
