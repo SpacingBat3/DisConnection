@@ -62,6 +62,7 @@
       "name": "electron",
       "message": "This module does not provide the information about the process type. Please use 'electron/common', 'electron/main' or 'electron/renderer' instead."
     }],
+    "no-empty": ["error", {"allowEmptyCatch": true}],
 
     /*** TypeScript ESLint cosmetic rules ***/
     "@typescript-eslint/member-delimiter-style": "warn",
@@ -69,7 +70,7 @@
       "SwitchCase": 1
     }],
     "@typescript-eslint/semi": "warn",
-    "@typescript-eslint/quotes": ["warn", "double", {"avoidEscape": true }],
+    "@typescript-eslint/quotes": ["warn", "double", {"avoidEscape": true}],
     "@typescript-eslint/no-use-before-define": "warn",
     "@typescript-eslint/no-unused-expressions": "warn",
     "@typescript-eslint/naming-convention": ["warn",{

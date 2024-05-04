@@ -1,5 +1,5 @@
 import kolor, { type colors } from "@spacingbat3/kolor";
-import sanitizeLiteral from "@spacingbat3/lss";
+import { sanitizeLiteral } from "@spacingbat3/lss";
 import { format, debug, deprecate } from "util";
 import { knownPacketID, Message, code, type, messageDefaultResponse } from "./packet";
 

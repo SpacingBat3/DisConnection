@@ -49,7 +49,7 @@ type event = typeof knownPacketID.events[number];
 /** Single digit */
 type digit = 0|1|2|3|4|5|6|7|8|9;
 
-export interface UnknownPacket {
+interface UnknownPacket {
   /** Message type/command. */
   cmd: string;
   /** Nonce identifying the communication. */
@@ -62,18 +62,18 @@ export interface UnknownMessage extends UnknownPacket {
   args: Record<string,unknown>;
 }
 
-export interface UnknownMessageResponse extends UnknownPacket {
+interface UnknownMessageResponse extends UnknownPacket {
   /** Message response data. */
   data: null|Record<string,unknown>;
 }
 
-export interface UnknownEvent extends UnknownMessageResponse {
+interface UnknownEvent extends UnknownMessageResponse {
   /** Event name. */
   evt: string;
 }
 
 /** An object type of known Discord's incoming messages. */
-export interface Message<C extends code, T extends string|never> extends UnknownMessage {
+export interface Message<C extends code, T extends string> extends UnknownMessage {
   cmd: C;
   args: C extends `${"INVITE"|"GUILD_TEMPLATE"}_BROWSER` ? {
     /** An invitation code. */
@@ -161,38 +161,11 @@ export interface Message<C extends code, T extends string|never> extends Unknown
   } : never;
 }
 
-export interface MessageResponse<C extends code> extends UnknownMessageResponse {
-  cmd: C;
-  data: C extends `${"INVITE"|"GUILD_TEMPLATE"}_BROWSER` ? {
-    /** An invitation code. */
-    code: string;
-    /** Guild template details. */
-    guildTemplate: C extends "GUILD_TEMPLATE_BROWSER" ? {
-      /** An invitation code. */
-      code: string;
-    } : never;
-  } : C extends "AUTHORIZE" ? {
-    /** An OAUTH2 authorization code. */
-    code: string;
-  } : null;
-}
-
-export interface MessageError<C extends code> extends UnknownEvent {
-  cmd: C;
-  data: {
-    /** Error code. */
-    code: number;
-    /** Human-readable error message. */
-    message: string;
-  },
-  evt: "ERROR"
-}
-
-export interface EventDispatch<C extends Exclude<event,"ERROR">> extends UnknownEvent {
-  cmd: "DISPATCH"
+interface EventDispatch<C extends Exclude<event,"ERROR">> extends UnknownEvent {
+  cmd: "DISPATCH";
   data: C extends "READY" ? {
     /** RPC scheme version. */
-    v: 1,
+    v: 1;
     /** Server configuration. */
     config: {
       cdn_host: string;
@@ -204,7 +177,7 @@ export interface EventDispatch<C extends Exclude<event,"ERROR">> extends Unknown
       id: string;
       username: string;
       discriminator: `${digit}${digit}${digit}${digit}`;
-      avatar: null
+      avatar: null;
     } | null;
   } : never;
   evt: C;
@@ -236,7 +209,7 @@ export function isMessage<C extends code|undefined=undefined,T extends type|unde
 
   // Check first if it is any kind of Discord message.
   if(!checkRecord(data, ["cmd","nonce"] as const, "string"))
-    return false
+    return false;
   if(typeof (data as UnknownMessage).args !== "object")
     return false;
 

@@ -203,7 +203,7 @@ export class WebSocketProtocol extends Protocol<"WebSocket"> {
             String.fromCharCode(...new Uint8Array(packet));
           try {
             parsedData = JSON.parse(packetString);
-          } catch {};
+          } catch {}
         }
         const hookParsed = knownPacketID.codes.some(code => {
           if(code === "DEEP_LINK")
@@ -276,11 +276,11 @@ export class WebSocketProtocol extends Protocol<"WebSocket"> {
             client.close(WebSocketClose.UnsupportedData, "Unknown data transfer");
           }
       });
-    }))().catch(reason => {
+    }))().catch((reason:unknown) => {
       if(reason instanceof Error)
         throw reason;
       else if(typeof reason === "string" || reason === undefined)
-        throw new Error(reason as string|undefined);
+        throw new Error(reason);
       else
         this.error(reason);
     });
