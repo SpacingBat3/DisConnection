@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import {
   Protocol,
   fgColor
-} from "../common/protocol";
+} from "#C/protocol";
 
 import {
   staticEvents,
@@ -12,7 +12,7 @@ import {
   messageDefaultResponse,
   knownPacketID,
   isMessage
-} from "../common/packet";
+} from "#C/packet";
 
 const uid = process.getuid?.()??process.env["UID"]??1000;
 

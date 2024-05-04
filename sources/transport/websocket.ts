@@ -6,14 +6,14 @@ import {
 import {
   Protocol,
   fgColor
-} from "../common/protocol";
+} from "#C/protocol";
 
 import {
   isMessage,
   staticEvents,
   knownPacketID,
   messageDefaultResponse
-} from "../common/packet";
+} from "#C/packet";
 
 /**
  * A list of standard status codes used within WebSocket communication at

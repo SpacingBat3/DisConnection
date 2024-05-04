@@ -52,6 +52,10 @@
     "node": "^16.10.0 || ^18.10.0 || >=19.0.0",
     "npm": ">=8.0.0"
   },
+  "imports": {
+    "#T/*":"./dist/transport/*.js",
+    "#C/*":"./dist/common/*/js"
+  },
   "publishConfig": {
     "access": "public"
   }

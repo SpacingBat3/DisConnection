@@ -31,7 +31,11 @@
     /* Disable module elision behaviour, banning entirely ESM syntax in CJS. */
     "verbatimModuleSyntax": false,
     /* Emit regular enums for compatibility with 'isolatedModules' and JS. */
-    "preserveConstEnums": true
+    "preserveConstEnums": true,
+    "paths": {
+        "#T/*": ["./sources/transport/*.ts"],
+        "#C/*": ["./sources/common/*.ts"]
+    }
   },
   "files": [
     "./sources/common/packet.ts",

@@ -7,25 +7,25 @@
 export {
   WebSocketProtocol as WebSocket,
   WebSocketClose,
-} from "./transport/websocket";
+} from "#T/websocket";
 
 export {
   IpcProtocol as IPC
-} from "./transport/ipc";
+} from "#T/ipc";
 
-export { RPCActivity } from "./common/packet";
+export { RPCActivity } from "#C/packet";
 
 export type {
   Message,
   UnknownMessage
-} from "./common/packet";
+} from "#C/packet";
 
 export type {
   HookFn,
   HookSignatures
-} from "./common/protocol";
+} from "#C/protocol";
 
-import type { ServerDetails as GDetails } from "./common/server";
+import type { ServerDetails as GDetails } from "#C/server";
 import type { Server as WS } from "ws";
 import type { Server as IPC } from "node:net";
 
