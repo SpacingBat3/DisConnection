@@ -1,9 +1,8 @@
 import kolor, { type colors } from "@spacingbat3/kolor";
 import sanitize from "@spacingbat3/lss";
 import { format, debug } from "util";
-import { knownPacketID, Message, code, type } from "./packet";
-
-import { getServer, type GenericServer, type ServerDetails } from "./server";
+import { knownPacketID, Message, code, type } from "./packet.js";
+import { getServer, type GenericServer, type ServerDetails } from "./server.js";
 
 /**
  * Flattened combination of `codes` and `types` from {@link knownMsgEl} used as

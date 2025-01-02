@@ -1,7 +1,4 @@
-import {
-  Server,
-  WebSocketServer
-} from "ws";
+import { WebSocketServer } from "ws";
 
 import {
   Protocol,
@@ -97,7 +94,7 @@ const unsupportedOrigins = [
  * Implements Discord client communication {@link Protocol} (between Discord
  * browser or any software with Discord integrations) via WebSocket server.
  */
-export class WebSocketProtocol extends Protocol<Server,"WebSocket"> {
+export class WebSocketProtocol extends Protocol<WebSocketServer,"WebSocket"> {
   name = "WebSocket" as const;
   stopServer() {
     void this.details?.then(({server}) => {
