@@ -71,41 +71,31 @@ However, there's still a lot of differences between both of these projects:
 
 - **arRPC implements both IPC and WebSocket**, Disconnection's IPC is WIP.
 
-- **arRPC uses internally ESM loader**, Disconnection is currently based on CJS.
-  
-  - ESM is still relatively new, at least new enough to not be supported
-    everywhere yet (see Electron software).
-  
-  - ESM is asynchronous, CJS is synchronous.
-  
-  - ESM is supported OOTB both by browsers and Node.js, CJS works OOTB mainly in
-    Node.js.
-  
-  - **CJS is easier to interop by ESM** than the other way. On CJS, it would be
-    tricky to load ESM modules in synchronous way, most likely you will end up
-    with `Promise` that can be handled asynchronously.
-  
-  - Take note Disconnection still uses TypeScript's ESM syntax for modules
-    (which is further transformed to CJS) and due to that switching to ESM might
-    be effortless if I'm going to drop CJS support.
+- **Both arRPC and DisConnection are ESM**.
 
-- arRPC API is based on Node.js `EventEmitter`. Disconnection is designed over
+- **arRPC also aims for Discord's process scanning implementation**. For
+  DisConnection, this is out-of-the-scope as we only consider in-scope for this
+  project to provide type-safe inter-process communication API and
+  implementation that is compatible with what Discord uses, not whole
+  *batteries included* RPC implementation.
+
+- **arRPC API is based on Node.js `EventEmitter`**. Disconnection is designed over
   EcmaScript async design and develops a concept of *hooks* instead.
-  
+
 - **arRPC currently lacks developer documentation**. Disconnection is
   extensively documented with the use of JSDoc/TSDoc comments and uses TypeDoc
   for generating online documentation from these comments.
-  
+
 - **Disconnection is written in TypeScript**. arRPC is purely written in
   JavaScript.
 
   - Disconnection uses some of TypeScript language features for its advantage,
     like enums and TypeScript's extended classes syntax (eg. abstract classes).
-  
+
   - arRPC currently doesn't even provide the type definition files (`.d.ts`) for
     TypeScript API consumers and (currently) there's no DefinitelyTyped package
     that supplies these types (`@types/arrpc`).
-  
+
   - TypeScript as of itself is believed to eliminate certain types of bugs in
     code without having the compiler to yell about it (that depends on compiler
     configuration though, as the one can always make it ignore certain issues
