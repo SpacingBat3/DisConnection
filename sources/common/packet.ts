@@ -226,9 +226,13 @@ export function isMessage<C extends code|undefined=undefined,T extends type|unde
           T extends "undefined" ? undefined : unknown;
 
   /** Verifies if given value satisfies record of the given type. */
-  function checkRecord<T extends readonly (string|number|symbol)[], X extends typeofResult>(record:object,keys:T,arg:X): record is Record<T[number],typeofResolved<X>> {
+  // Bypass ESLint there, because it's an alias for keyof Record<...,...>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function checkRecord<T extends readonly (keyof any)[], X extends typeofResult>(record:object|null,keys:T,arg:X): record is Record<T[number],typeofResolved<X>> {
+    if(!record)
+      return false;
     for(const key of keys)
-      if(typeof (record as Record<string|number|symbol,unknown>)[key] !== arg)
+      if(!(key in record) || typeof record[<keyof typeof record>key] !== arg)
         return false;
     return true;
   }
@@ -236,31 +240,25 @@ export function isMessage<C extends code|undefined=undefined,T extends type|unde
     return false;
 
   // Check first if it is any kind of Discord message.
-  if(!checkRecord(data, ["cmd","nonce"] as const, "string"))
+  if(!checkRecord(data, <const> ["cmd","nonce"], "string"))
     return false;
-  if(typeof (data as UnknownMessage).args !== "object")
+
+  if(!("args" in data) || !data.args || typeof data.args !== "object")
     return false;
 
   // Check "cmd" value
-  if(typeof cmd === "string") {
-    if(data.cmd !== cmd)
-      return false;
-  } else if(Array.isArray(cmd)) {
-    if(!cmd.includes((data as UnknownMessage).cmd as C&string))
-      return false;
-  }
+  if(typeof cmd === "string" && data.cmd !== cmd || cmd &&
+      !Array.prototype.includes.call(cmd,data.cmd))
+    return false;
 
   // Check "args.type" value
-  if(argsType !== undefined && typeof (data as Message<"DEEP_LINK",string>).args.params === "object")
-    switch(argsType) {
-      case "CHANNEL":
-        if(!(checkRecord(
-          (data as Message<"DEEP_LINK",string>).args.params,
-          ["guildId", "channelId", "search", "fingerprint"] as const,
-          "string"
-        ) || (data as Message<"DEEP_LINK","CHANNEL">).args.params.channelId === undefined))
-          return false;
-    }
+  if("params" in data.args && typeof data.args.params === "object") switch(argsType) {
+    case "CHANNEL":
+      if(!checkRecord(data.args.params,<const>["guildId","search","fingerprint"],"string")
+          || !("channelId" in data.args.params) || data.args.params.channelId !== undefined
+          && typeof data.args.params.channelId !== "string")
+        return false;
+  }
 
   // All is "good enough"
   return true;
