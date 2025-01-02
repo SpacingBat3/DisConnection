@@ -15,7 +15,7 @@
     /* Directory in which are placed all emitted files */
     "outDir": "./dist",
     /* Directory in which are placed declaration files */
-    "declarationDir": "./types/",
+    "declarationDir": "./types",
     /* Whenever comments are removed from emitted files */
     "removeComments": false,
     /* Use `tslib` for import helpers. */
@@ -41,7 +41,7 @@
     "./sources/common/packet.ts",
     "./sources/common/protocol.ts",
     "./sources/common/server.ts",
-    "sources/transport/ipc.ts",
+    "./sources/transport/ipc.ts",
     "./sources/transport/websocket.ts",
     "./sources/main.ts"
   ]
