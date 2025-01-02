@@ -32,7 +32,6 @@ function parsePacket(packet:Buffer):RawMessage[] {
     const kind=packet.readUInt32LE(0),
       size=packet.readUInt32LE(4),
       data=packet.subarray(8,8+size);
-    
     msgCollection.push({kind,size,data});
     packet=packet.subarray(8+size);
   }
@@ -73,7 +72,7 @@ export class IpcProtocol extends Protocol<Server,"IPC"> {
   }
   constructor(cConsole: Console, color:fgColor = "yellow") {
     super([0,9,port => createServer().listen(`${socketPath}/discord-${port}`)],cConsole,color);
-    (async() => void (await this.details)
+    void (async() => void (await this.details)
       ?.server.on("connection", socket => {
         socket.write(JSON.stringify(staticEvents.ready));
         const pacCollect:Buffer[] = [];
@@ -173,13 +172,6 @@ export class IpcProtocol extends Protocol<Server,"IPC"> {
             pacCollect.length=0;
           });
       })
-    )().catch(reason => {
-      if(reason instanceof Error)
-        throw reason;
-      else if(typeof reason === "string" || reason === undefined)
-        throw new Error(reason as string|undefined);
-      else
-        this.error(reason);
-    });
+    )();
   }
 }

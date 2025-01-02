@@ -119,7 +119,7 @@ export class WebSocketProtocol extends Protocol<Server,"WebSocket"> {
       color
     );
     // Async block
-    (async() => (await this.details)
+    void (async() => (await this.details)
       ?.server.on("connection", (client, req) => {
         /** Whenever origin passes given rule. */
         function passingRule(rule:unknown):boolean {
@@ -227,13 +227,6 @@ export class WebSocketProtocol extends Protocol<Server,"WebSocket"> {
             }
         });
       })
-    )().catch(reason => {
-      if(reason instanceof Error)
-        throw reason;
-      else if(typeof reason === "string" || reason === undefined)
-        throw new Error(reason as string|undefined);
-      else
-        this.error(reason);
-    });
+    )();
   }
 }
