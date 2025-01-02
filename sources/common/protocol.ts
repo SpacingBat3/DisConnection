@@ -205,7 +205,7 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
    * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
    */
-  public removeAllHooks<T extends hookName>(name: T) {
+  public removeAllHooks(name: hookName) {
     if(!(name in this.#hooks))
       throw new TypeError(`Hook list "${name}" is invalid!`);
     const returnValue = [...this.#hooks[name].list].length > 0;
@@ -235,7 +235,7 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
    * @throws {@link TypeError} on invalid hook list name.
    * @since v1.0.0
    */
-  public anyHooksActive<T extends hookName>(name:T) {
+  public anyHooksActive(name:hookName) {
     if(!(name in this.#hooks))
       throw new TypeError(`Hook list "${name}" is invalid!`);
     if([...this.#hooks[name].list].length === 0)
@@ -252,7 +252,7 @@ export abstract class Protocol<S extends GenericServer,T extends string=string> 
    * @throws {@link TypeError} on invalid function parameter types.
    * @since v1.0.0
    */
-  public toggleHooks<T extends hookName>(name: T, active = !this.#hooks[name].active) {
+  public toggleHooks(name: hookName, active = !this.#hooks[name].active) {
     if(!(name in this.#hooks) || typeof active !== "boolean")
       throw new TypeError("Invalid parameters type!");
     this.#hooks[name].active = active;
